@@ -1,0 +1,1819 @@
+<title>Theater of the World</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Baromètre hebdomadaire des relations internationales : conflits, coopérations, commerce et bases militaires sur une même carte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : carte plein cadre à gauche, colonne de lecture à droite, frise des 12 semaines sous la carte.
+   Ambiance de salle de veille : fond graphite, couleurs désaturées, aucun effet lumineux.
+   La carte est une matrice de points : chaque pays est tramé dans la couleur de sa relation. */
+:root{
+  --paper:#0E1318; --panel:#12181E; --wash:#18202A; --rule:#242E38; --edge:#0E1318;
+  --ocean:#131B23; --graticule:rgba(255,255,255,.035);
+  --ink:#E4E8EC; --ink-2:#9BA6B1; --ink-3:#67737F; --sel:#D9D4C8; --ivory:#D9D4C8; --hatch:#3A4550;
+  --halo:rgba(14,19,24,.9);
+  --s-3:#B03A47; --s-2:#CF7A45; --s-1:#D9C681; --s0:#4A5561; --s1:#9FC6D8; --s2:#4E93C2; --s3:#5A4FB0;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.35);
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-read:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.eyebrow{font-family:var(--f-data);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- Cadre ---------- */
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 410px;grid-template-rows:auto minmax(0,1fr)}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:10px 22px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--rule)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand svg{flex:none}
+.wordmark{font-family:var(--f-display);font-stretch:112%;font-weight:750;font-size:15px;letter-spacing:.11em;line-height:1;color:var(--ink);white-space:nowrap}
+.tagline{font-size:12.5px;color:var(--ink-2);border-left:1px solid var(--rule);padding-left:10px;line-height:1.25}
+.meta{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.stamp{font-family:var(--f-data);font-size:10.5px;color:var(--ink-2);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.live{width:6px;height:6px;border-radius:50%;background:#5DA77A}
+.illus{border:1px dashed var(--ink-3);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;background:none;cursor:pointer;color:var(--ink-2)}
+.illus:hover{color:var(--ink);border-color:var(--ink)}
+.search{position:relative}
+.search input{width:190px;border:1px solid var(--rule);background:var(--paper);border-radius:7px;padding:6px 10px 6px 28px;font:inherit;font-size:13px;color:var(--ink)}
+.search input::placeholder{color:var(--ink-3)}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
+.btn{border:1px solid var(--rule);background:var(--panel);border-radius:7px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3)}
+
+.mapcol{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0;min-height:0;border-right:1px solid var(--rule)}
+.mapwrap{position:relative;min-height:0;background:var(--paper);overflow:hidden}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;user-select:none;-webkit-user-select:none}
+#map:active{cursor:grabbing}
+.panel{min-height:0;overflow-y:auto;background:var(--panel);overscroll-behavior:contain}
+
+/* ---------- Surcouches de carte ---------- */
+.mapbar{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--rule)}
+.ctrl{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ov{position:absolute;z-index:2}
+.ov-tl{top:16px;left:max(18px,env(safe-area-inset-left,0px));max-width:min(520px,calc(100% - 80px));pointer-events:none}
+.ov-tr{top:14px;right:max(14px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:6px}
+.ov-bl{bottom:14px;left:max(14px,env(safe-area-inset-left,0px));max-width:calc(100% - 28px)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:6px}
+.cap h1{font-family:var(--f-ui);font-weight:600;font-size:clamp(17px,1.55vw,21px);line-height:1.2;margin:5px 0 5px;letter-spacing:-.005em;text-wrap:balance}
+.cap h1 em{font-style:normal}
+.cap p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.cap .hint{margin-top:3px;color:var(--ink-3)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:6px;background:var(--paper);padding:2px;gap:2px}
+.seg button{border:0;background:none;padding:5px 10px;border-radius:4px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button:disabled,.play:disabled{opacity:.4;cursor:not-allowed}
+.seg button[aria-pressed="true"]{background:var(--wash);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:transparent;border-radius:6px;padding:4px 10px 4px 8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-3)}
+.chip svg{flex:none}
+.chip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink-3);background:var(--wash)}
+.chip[aria-pressed="false"] svg{opacity:.4}
+.zoom{display:flex;flex-direction:column;overflow:hidden}
+.zoom button{width:30px;height:30px;border:0;background:none;cursor:pointer;font-size:15px;font-weight:600;display:grid;place-items:center;color:var(--ink-2)}
+.zoom button+button{border-top:1px solid var(--rule)}
+.zoom button:hover{color:var(--ink);background:var(--wash)}
+
+.legend{padding:10px 12px 9px}
+.legend-t{font-size:11.5px;color:var(--ink-2);margin-bottom:8px;display:flex;justify-content:space-between;gap:12px}
+.legend-t .num{font-size:10px;color:var(--ink-3)}
+.scale{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;width:min(470px,calc(100vw - 56px))}
+.scale button{border:0;background:none;padding:0;cursor:default;display:flex;flex-direction:column;gap:5px;min-width:0;text-align:center}
+.scale i{display:block;height:12px;border-radius:2px}
+.scale span{font-size:10.5px;color:var(--ink-2);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scale button:hover span,.scale button:focus-visible span{color:var(--ink)}
+.legend-x{display:flex;gap:6px 16px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px solid var(--rule);font-size:11px;color:var(--ink-2)}
+.legend-x span{display:inline-flex;align-items:center;gap:6px}
+
+.tip{position:absolute;z-index:6;pointer-events:none;background:var(--wash);color:var(--ink);border:1px solid var(--rule);font-size:12.5px;line-height:1.35;padding:7px 10px;border-radius:5px;max-width:270px;box-shadow:var(--shadow)}
+.tip b{font-weight:650}
+.tip .m{font-family:var(--f-data);font-size:10.5px;color:var(--ink-2);display:block;margin-top:2px}
+
+/* ---------- Carte SVG ---------- */
+#fx,#mapTop{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.sphere{fill:var(--ocean)}
+.grat{fill:none;stroke:var(--graticule);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+.c{fill:url(#d0);stroke:#29333D;stroke-width:.5;vector-effect:non-scaling-stroke;cursor:pointer;transition:opacity .25s ease}
+.c:hover{stroke:var(--ink);stroke-width:1.1}
+.c.self{stroke:var(--ink);stroke-width:1}
+.c.other{stroke:var(--ink);stroke-width:1.8}
+.c.dim{opacity:.12}
+.c.na{fill:url(#hatch-na);cursor:default}
+.micro{stroke:var(--paper);stroke-width:.8;vector-effect:non-scaling-stroke;cursor:pointer}
+.arc{fill:none;stroke-linecap:round;pointer-events:none;stroke-width:calc(var(--w,1) * 1px / var(--k,1));stroke-opacity:.7;transition:stroke-opacity .3s}
+.arc.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .9s cubic-bezier(.4,.1,.2,1) forwards}
+.arc.fade{stroke-opacity:.12}
+.arc.focus{stroke-opacity:1}
+@keyframes draw{to{stroke-dashoffset:0}}
+.arc-hit{fill:none;stroke:transparent;stroke-width:calc(12px / var(--k,1));pointer-events:stroke;cursor:pointer}
+.trade path.flow{fill:none;stroke:var(--ink-2);stroke-opacity:.35;stroke-linecap:round;stroke-dasharray:calc(2px / var(--k,1)) calc(3px / var(--k,1));stroke-width:calc(var(--w,1) * 1px / var(--k,1));pointer-events:none}
+.hot{cursor:pointer}
+.hot .iso{fill:none;stroke:var(--s-3);stroke-opacity:.45;stroke-width:.8;stroke-dasharray:2 2.5;vector-effect:non-scaling-stroke}
+.hot .bub{fill:var(--s-3);fill-opacity:.2;stroke:var(--s-3);stroke-width:1;vector-effect:non-scaling-stroke}
+.hot .core{fill:var(--s-3)}
+.hot .hit{fill:transparent}
+.hot.on .bub{fill-opacity:.4;stroke:var(--ink)}
+.base{cursor:pointer}
+.base path{fill:var(--paper);stroke:var(--ink-2);stroke-width:1.1;vector-effect:non-scaling-stroke}
+.base.own path{fill:var(--ink);stroke:var(--ink)}
+.lbl{font-family:var(--f-ui);font-size:11px;font-weight:600;fill:var(--ink);paint-order:stroke;stroke:var(--halo);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
+.lbl.sel{font-family:var(--f-display);font-stretch:110%;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.lbl.hl{font-size:10.5px;font-weight:500;fill:var(--ink-2)}
+.lg{animation:fadein .5s ease both}
+@keyframes fadein{from{opacity:0}}
+
+/* ---------- Frise ---------- */
+.frise{display:flex;align-items:flex-end;gap:14px;padding-block:9px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-top:1px solid var(--rule)}
+.play{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--rule);background:var(--panel);cursor:pointer;display:grid;place-items:center;margin-bottom:2px}
+.play:hover{border-color:var(--ink-3)}
+.frise-info{flex:none;min-width:136px;display:flex;flex-direction:column;gap:1px}
+.frise-info b{font-family:var(--f-display);font-stretch:112%;font-size:14px;font-weight:720}
+.frise-info span{font-size:11.5px;color:var(--ink-2)}
+.weeks{flex:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;min-width:0}
+.wk{border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0}
+.wk .b{height:30px;display:flex;align-items:flex-end;border-bottom:1px solid var(--rule)}
+.wk .b i{display:block;width:100%;background:var(--hatch);border-radius:3px 3px 0 0;transition:background .2s}
+.wk:hover .b i{background:var(--ink-3)}
+.wk[aria-pressed="true"] .b i{background:var(--ink)}
+.wk .l{font-family:var(--f-data);font-size:9.5px;color:var(--ink-3);text-align:center}
+.wk[aria-pressed="true"] .l{color:var(--ink);font-weight:500}
+.frise-idx{flex:none;text-align:right;display:flex;flex-direction:column;gap:1px}
+.frise-idx span{font-size:11px;color:var(--ink-2)}
+.frise-idx b{font-family:var(--f-data);font-size:15px;font-weight:500}
+
+/* ---------- Panneau ---------- */
+.pi{display:flex;flex-direction:column;gap:24px;padding-block:20px 44px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.crumb{align-self:flex-start;border:0;background:none;padding:0;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.crumb:hover{color:var(--ink)}
+.ph{display:flex;flex-direction:column;gap:8px}
+.pname{font-family:var(--f-display);font-weight:650;font-size:25px;line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.pname .vs{display:block;font-size:15px;font-stretch:100%;font-weight:600;color:var(--ink-3);margin:4px 0}
+.lede{font-family:var(--f-read);font-size:14.5px;line-height:1.55;margin:0;color:var(--ink-2);max-width:62ch}
+.orgs{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-family:var(--f-data);font-size:10px;letter-spacing:.03em;border:1px solid var(--rule);border-radius:4px;padding:2px 6px;color:var(--ink-2);background:var(--panel)}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h3{margin:0;padding-top:14px;border-top:1px solid var(--rule);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.sec h3 small{font-family:var(--f-data);font-size:10px;font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--ink-3)}
+.note{font-size:12px;color:var(--ink-3);margin:0}
+.howto{margin:0;padding:12px 14px 12px 32px;background:var(--wash);border-radius:8px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-2)}
+.howto li::marker{font-family:var(--f-data);font-size:11px;color:var(--ink-3)}
+.howto b{color:var(--ink)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:650;white-space:nowrap}
+.pill i{width:10px;height:10px;border-radius:2px;flex:none}
+.pill.big{font-size:15px;font-weight:700}
+.pill.big i{width:14px;height:14px;border-radius:3px}
+.pill.ghost{color:var(--ink-3);font-weight:550}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.stat{background:var(--panel);padding:10px 11px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-data);font-size:20px;font-weight:500;line-height:1.2}
+.stat span{font-size:11.5px;color:var(--ink-2);line-height:1.25}
+
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n d" "l s";gap:4px 12px;align-items:center;border:0;border-bottom:1px solid var(--rule);background:none;padding:9px 6px;margin:0 -6px;text-align:left;cursor:pointer;border-radius:4px}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--wash)}
+.row .rn{grid-area:n;font-weight:650;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .rn .sep{color:var(--ink-3);font-weight:400;margin:0 2px}
+.row .rd{grid-area:d;font-size:11.5px;color:var(--ink-2);text-align:right}
+.row .rl{grid-area:l;display:flex;align-items:center;gap:6px;min-width:0;font-size:12px;color:var(--ink-3)}
+.row .rs{grid-area:s;display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.row .sc{font-size:11.5px;color:var(--ink-2)}
+.spark polyline{fill:none;stroke:var(--ink-3);stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.spark circle{stroke:var(--panel);stroke-width:1}
+
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;border:0;border-bottom:1px solid var(--rule);background:none;padding:9px 6px;margin:0 -6px;text-align:left;cursor:pointer;border-radius:4px}
+.hrow:last-child{border-bottom:0}
+.hrow:hover{background:var(--wash)}
+.hrow .hn{font-weight:650;font-size:13.5px}
+.hrow .hk{font-size:12px;color:var(--ink-3)}
+.hrow .hv{font-size:11.5px;color:var(--ink-2);text-align:right}
+.hbar{grid-column:1/-1;height:4px;background:var(--wash);border-radius:2px;overflow:hidden}
+.hbar i{display:block;height:100%;background:var(--s-3);border-radius:2px}
+
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.picks button{border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;cursor:pointer}
+.picks button:hover{border-color:var(--ink);background:var(--wash)}
+
+.profile{display:flex;gap:2px;height:14px}
+.profile button{border:0;padding:0;cursor:pointer;min-width:3px;border-radius:2px}
+.profile button:first-child{border-radius:4px 2px 2px 4px}
+.profile button:last-child{border-radius:2px 4px 4px 2px}
+.profile-k{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;font-size:10.5px;color:var(--ink-2);text-align:center}
+.profile-k b{display:block;font-family:var(--f-data);font-size:12px;font-weight:500;color:var(--ink)}
+
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.kpi{display:flex;flex-direction:column;gap:1px;min-width:0}
+.kpi span{font-size:11.5px;color:var(--ink-2)}
+.kpi b{font-family:var(--f-data);font-size:16px;font-weight:500}
+.kpi small{font-family:var(--f-data);font-size:9.5px;color:var(--ink-3)}
+
+.tbars{display:flex;flex-direction:column;gap:7px}
+.tb{display:grid;grid-template-columns:110px minmax(0,1fr) 44px;gap:10px;align-items:center;border:0;background:none;padding:0;text-align:left;cursor:pointer;font-size:12.5px}
+.tb span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.tb .tr{height:10px;background:var(--wash);border-radius:2px;overflow:hidden}
+.tb .tr i{display:block;height:100%;background:var(--ink-2);border-radius:2px}
+.tb .num{font-size:11px;color:var(--ink-2);text-align:right}
+.tb:hover span:first-child{text-decoration:underline}
+
+.plist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.plist li{display:flex;gap:8px;align-items:baseline}
+.plist .d{width:9px;height:9px;transform:rotate(45deg);border:1.3px solid var(--ink);flex:none;margin-top:3px}
+.plist .d.own{background:var(--ink)}
+.plist em{font-style:normal;color:var(--ink-3)}
+.linkbtn{border:0;background:none;padding:0;font-size:12.5px;font-weight:650;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+.score{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.score .sv{font-family:var(--f-data);font-size:34px;font-weight:500;line-height:1;margin-top:10px}
+.score .sv small{font-size:13px;color:var(--ink-3)}
+.score .dl{font-size:12px;color:var(--ink-2);text-align:right}
+.meter{position:relative;height:12px;display:grid;grid-template-columns:3fr 3fr 2.5fr 3fr 2.5fr 3fr 3fr;gap:2px}
+.meter i{display:block;border-radius:2px;opacity:.9}
+.meter b{position:absolute;top:-4px;width:3px;height:20px;background:var(--ink);border-radius:2px;box-shadow:0 0 0 2px var(--panel);transform:translateX(-50%)}
+.meter-k{display:flex;justify-content:space-between;font-family:var(--f-data);font-size:9.5px;color:var(--ink-3)}
+
+.pchart{width:100%;height:auto;display:block;overflow:visible}
+.pchart .band-l{font-size:9.5px;fill:var(--ink-3);font-family:var(--f-ui);font-weight:600}
+.pchart .ax{font-family:var(--f-data);font-size:9px;fill:var(--ink-3)}
+.pchart .ln{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.pchart .guide{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 3}
+.pchart .gl{font-family:var(--f-data);font-size:10px;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+
+.pillar{display:grid;grid-template-columns:96px minmax(0,1fr) 44px;gap:10px;align-items:center}
+.pillar .pl{display:flex;flex-direction:column;line-height:1.2}
+.pillar .pl b{font-size:12.5px}
+.pillar .pl span{font-family:var(--f-data);font-size:9.5px;color:var(--ink-3)}
+.pbar{position:relative;height:12px;background:var(--wash);border-radius:2px}
+.pbar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink-3)}
+.pbar .f{position:absolute;top:0;bottom:0;border-radius:2px}
+.pillar .pv{font-size:12px;text-align:right}
+.formula{font-family:var(--f-data);font-size:10.5px;color:var(--ink-2);background:var(--wash);border-radius:6px;padding:8px 10px;line-height:1.6;overflow-x:auto}
+
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 14px;margin:0;font-size:12.5px}
+.facts dt{color:var(--ink-2)}
+.facts dd{margin:0;font-weight:600}
+
+.evs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ev{display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.ev:last-child{border-bottom:0}
+.ev time{font-family:var(--f-data);font-size:10.5px;color:var(--ink-3);padding-top:2px}
+.ev .et{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.ev p{margin:2px 0 4px;font-family:var(--f-read);font-size:13.5px;line-height:1.45}
+.ev a,.src a{font-family:var(--f-data);font-size:10px;color:var(--ink-2);text-decoration:underline;text-underline-offset:2px}
+.ev a:hover,.src a:hover{color:var(--ink)}
+.ev .ex{font-family:var(--f-data);font-size:9.5px;color:var(--ink-3);margin-left:6px}
+.conf{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.conf .cb{display:flex;gap:2px}
+.conf .cb i{width:16px;height:6px;border-radius:2px;background:var(--rule)}
+.conf .cb i.on{background:var(--ink)}
+.src{display:flex;flex-wrap:wrap;gap:6px 12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.ingest{font-family:var(--f-data);font-size:10.5px;color:var(--ink-2);line-height:1.7;background:var(--wash);border-radius:8px;padding:10px 12px}
+.ingest b{font-weight:500;color:var(--ink)}
+
+/* ---------- Méthode ---------- */
+dialog{border:1px solid var(--rule);border-radius:12px;padding:0;background:var(--panel);color:var(--ink);width:min(760px,calc(100vw - 24px));max-height:min(88vh,900px);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(10,16,21,.45)}
+.dlg{display:flex;flex-direction:column;gap:22px;padding:26px max(22px,env(safe-area-inset-left,0px)) 32px}
+.dlg-h{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.dlg h2{font-family:var(--f-display);font-size:22px;font-weight:650;margin:4px 0 0;line-height:1.15}
+.dlg h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin:0 0 8px;padding-top:14px;border-top:1px solid var(--rule)}
+.dlg p,.dlg li{font-family:var(--f-read);font-size:14px;line-height:1.6;max-width:68ch;color:var(--ink-2)}
+.dlg p{margin:0 0 8px}
+.dlg ul{margin:0;padding-left:20px}
+.x{border:1px solid var(--rule);background:var(--panel);border-radius:7px;width:34px;height:34px;cursor:pointer;font-size:18px;flex:none}
+.tbl-wrap{overflow-x:auto}
+.tbl{border-collapse:collapse;width:100%;font-size:12.5px;min-width:560px}
+.tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;padding:6px 10px 6px 0;border-bottom:1px solid var(--rule)}
+.tbl td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.tbl td:first-child{font-weight:650;white-space:nowrap}
+.tbl a{color:var(--ink);font-family:var(--f-data);font-size:10.5px}
+.lvls{display:flex;flex-direction:column;gap:0}
+.lv{display:grid;grid-template-columns:150px minmax(0,1fr) 90px;gap:12px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:13px;align-items:baseline}
+.lv .num{font-size:10.5px;color:var(--ink-3);text-align:right}
+.lv span:nth-child(2){color:var(--ink-2)}
+.pipe{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pipe li{border:1px solid var(--rule);border-radius:8px;padding:10px 11px;font-family:var(--f-ui);font-size:12.5px;line-height:1.4;max-width:none}
+.pipe li b{display:block;font-family:var(--f-data);font-size:10px;font-weight:500;color:var(--ink-3);margin-bottom:3px}
+
+/* ---------- Petits écrans ---------- */
+@media (max-width:1100px){.tagline{display:none}}
+@media (max-width:959px){
+  html,body{height:auto}
+  .app{display:block;height:auto}
+  .mapwrap{height:clamp(330px,calc(52vw + 170px),64svh)}
+  .mapcol{border-right:0}
+  .panel{border-top:1px solid var(--rule);overflow:visible}
+  .search input{width:150px}
+}
+@media (max-width:640px){
+  .cap p,.cap .hint{display:none}
+  .cap h1{font-size:16px;margin:3px 0 0}
+  .legend-x{display:none}
+  .scale span{font-size:9.5px}
+  .frise{flex-wrap:wrap;gap:8px 12px}
+  .weeks{order:3;flex-basis:100%}
+  .frise-idx{margin-left:auto}
+  .stamp .long{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .arc.draw{animation:none;stroke-dashoffset:0}
+  .lg{animation:none}
+  .c,.arc{transition:none}
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><ellipse cx="13" cy="13" rx="11.5" ry="8.5" fill="none" stroke="currentColor" stroke-width="1.4"/><ellipse cx="12" cy="13.5" rx="7" ry="5" fill="none" stroke="currentColor" stroke-width="1.4"/><ellipse cx="11" cy="14" rx="2.8" ry="2.1" style="fill:var(--s-3)"/></svg>
+      <span class="wordmark">THEATER OF THE WORLD</span>
+      <span class="tagline">Baromètre hebdomadaire<br>des relations internationales</span>
+    </div>
+    <div class="meta">
+      <span class="stamp"><span class="live" aria-hidden="true"></span><span><span class="long">Actualisé le </span><span id="stampTxt">mer. 21 oct. 2026 · 06:00 UTC</span></span></span>
+      <button class="illus" id="btnIllus" type="button">Données illustratives</button>
+      <label class="search"><span class="sr">Chercher un pays</span>
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="q" type="search" list="countries" placeholder="Chercher un pays" autocomplete="off">
+      </label>
+      <datalist id="countries"></datalist>
+      <button class="btn" id="btnMethod" type="button">Méthode et sources</button>
+    </div>
+  </header>
+
+  <div class="mapcol">
+    <div class="mapbar">
+        <div class="ctrl">
+        <div class="seg" role="group" aria-label="Mode d’affichage">
+          <button type="button" id="mSit" aria-pressed="true">Situation</button>
+          <button type="button" id="mEvo" aria-pressed="false">Évolution 4 sem.</button>
+        </div>
+      </div>
+      <div class="ctrl" role="group" aria-label="Calques">
+        <button type="button" class="chip" data-layer="links" aria-pressed="true"><svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M1 10Q8 -2 15 10" fill="none" style="stroke:var(--s-2)" stroke-width="2" stroke-linecap="round"/></svg><span class="cl">Liens</span></button>
+        <button type="button" class="chip" data-layer="conflicts" aria-pressed="true"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" style="fill:var(--s-3)" fill-opacity=".25"/><circle cx="6" cy="6" r="2.4" style="fill:var(--s-3)"/></svg><span class="cl">Conflits armés</span></button>
+        <button type="button" class="chip" data-layer="trade" aria-pressed="false"><svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M1 10Q8 -2 15 10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/></svg><span class="cl">Commerce</span></button>
+        <button type="button" class="chip" data-layer="bases" aria-pressed="false"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1L11 6L6 11L1 6Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span class="cl">Bases militaires</span></button>
+      </div>
+    </div>
+    <div class="mapwrap" id="mapwrap">
+      <svg id="map" role="img" aria-label="Carte du monde des relations internationales">
+        <defs>
+          <pattern id="d-3" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s-3)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s-3)"/></pattern>
+          <pattern id="d-2" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s-2)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s-2)"/></pattern>
+          <pattern id="d-1" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s-1)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s-1)"/></pattern>
+          <pattern id="d0" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s0)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s0)"/></pattern>
+          <pattern id="d1" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s1)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s1)"/></pattern>
+          <pattern id="d2" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s2)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s2)"/></pattern>
+          <pattern id="d3" class="dp" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" style="fill:var(--s3)" fill-opacity=".15"/><circle cx="2" cy="2" r="1.3" style="fill:var(--s3)"/></pattern>
+          <pattern id="hatch-na" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+            <rect width="5" height="5" style="fill:var(--wash)"/><rect width="1" height="5" style="fill:var(--hatch)"/>
+          </pattern>
+        </defs>
+      </svg>
+      <canvas id="fx" aria-hidden="true"></canvas>
+      <svg id="mapTop" aria-hidden="true"></svg>
+
+      <div class="ov ov-tl">
+        <div class="cap" id="cap" aria-live="polite"></div>
+      </div>
+
+      <div class="ov ov-tr">
+        <div class="card zoom">
+          <button type="button" id="zIn" aria-label="Zoomer">+</button>
+          <button type="button" id="zOut" aria-label="Dézoomer">−</button>
+          <button type="button" id="zReset" aria-label="Recentrer la carte"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></button>
+        </div>
+      </div>
+
+      <div class="ov ov-bl card legend" id="legend"></div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+
+    <div class="frise">
+      <button class="play" id="play" type="button" aria-label="Rejouer les 12 dernières semaines"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg></button>
+      <div class="frise-info"><b id="fwk">Semaine 43</b><span id="fdate"></span></div>
+      <div class="weeks" id="weeks" role="group" aria-label="Choisir la semaine affichée"></div>
+      <div class="frise-idx"><span>Indice mondial de tension</span><b class="num" id="fidx"></b></div>
+    </div>
+  </div>
+
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</div>
+
+<dialog id="method" aria-labelledby="mTitle">
+  <div class="dlg">
+    <div class="dlg-h">
+      <div><div class="eyebrow">Méthode et sources</div><h2 id="mTitle">Comment Theater of the World mesure une relation</h2></div>
+      <button class="x" id="mClose" type="button" aria-label="Fermer">×</button>
+    </div>
+    <section>
+      <h3>Ce que mesure l’outil</h3>
+      <p>Chaque paire de pays reçoit une note de −10 (guerre ouverte) à +10 (alliance intégrée), recalculée chaque jour sur une fenêtre glissante de quatre semaines. La note est convertie en sept niveaux lisibles sans connaissance préalable. Un bulletin consolidé est publié chaque lundi et archivé, ce qui permet de remonter le temps semaine par semaine.</p>
+    </section>
+    <section>
+      <h3>L’échelle</h3>
+      <div class="lvls" id="mLevels"></div>
+    </section>
+    <section>
+      <h3>Le calcul de la note</h3>
+      <p>La note combine trois piliers, chacun noté de −10 à +10 :</p>
+      <ul>
+        <li><b>Diplomatie (35 %)</b> : ton des événements bilatéraux codés selon l’échelle de Goldstein (GDELT), visites et accords officiels, convergence des votes à l’Assemblée générale de l’ONU.</li>
+        <li><b>Économie (25 %)</b> : intensité du commerce bilatéral rapportée au PIB (UN Comtrade, FMI), sanctions en vigueur (OpenSanctions), dépendances énergétiques.</li>
+        <li><b>Sécurité (40 %)</b> : traités de défense, affrontements et incidents armés (ACLED, UCDP), transferts d’armes (SIPRI), bases et déploiements.</li>
+      </ul>
+      <p>Deux garde-fous : un niveau « Hostilité » ou « Conflit armé » exige des événements vérifiés dans au moins deux sources indépendantes. Sans événement documenté, la relation est estimée par un modèle de proximité (votes à l’ONU, organisations communes, commerce attendu) et ne peut pas descendre sous « Tension ».</p>
+    </section>
+    <section>
+      <h3>Sources et rythme de mise à jour</h3>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Source</th><th>Ce qu’elle apporte</th><th>Fréquence</th><th>Lien</th></tr></thead>
+        <tbody>
+          <tr><td>GDELT 2.0</td><td>Événements et ton médiatique, plus de 100 langues</td><td>15 min, agrégé chaque jour</td><td><a href="https://www.gdeltproject.org" target="_blank" rel="noopener">gdeltproject.org</a></td></tr>
+          <tr><td>ACLED</td><td>Affrontements, frappes, violences politiques géolocalisés</td><td>Hebdomadaire</td><td><a href="https://acleddata.com" target="_blank" rel="noopener">acleddata.com</a></td></tr>
+          <tr><td>UCDP</td><td>Conflits armés et victimes, référence académique</td><td>Mensuelle et annuelle</td><td><a href="https://ucdp.uu.se" target="_blank" rel="noopener">ucdp.uu.se</a></td></tr>
+          <tr><td>OpenSanctions</td><td>Sanctions de l’UE, des États-Unis, de l’ONU…</td><td>Quotidienne</td><td><a href="https://www.opensanctions.org" target="_blank" rel="noopener">opensanctions.org</a></td></tr>
+          <tr><td>UN Comtrade · FMI</td><td>Commerce bilatéral de biens</td><td>Mensuelle à annuelle</td><td><a href="https://comtradeplus.un.org" target="_blank" rel="noopener">comtradeplus.un.org</a></td></tr>
+          <tr><td>Votes de l’AGNU</td><td>Convergence des votes entre États</td><td>Par session</td><td><a href="https://digitallibrary.un.org" target="_blank" rel="noopener">digitallibrary.un.org</a></td></tr>
+          <tr><td>SIPRI</td><td>Dépenses militaires, transferts d’armes, arsenaux</td><td>Annuelle</td><td><a href="https://www.sipri.org/databases" target="_blank" rel="noopener">sipri.org</a></td></tr>
+          <tr><td>IISS · veille OSINT</td><td>Bases et déploiements à l’étranger</td><td>Annuelle et corrections manuelles</td><td><a href="https://www.iiss.org/publications/the-military-balance/" target="_blank" rel="noopener">iiss.org</a></td></tr>
+          <tr><td>Banque mondiale · FMI</td><td>PIB, population</td><td>Annuelle</td><td><a href="https://data.worldbank.org" target="_blank" rel="noopener">data.worldbank.org</a></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+    <section>
+      <h3>La chaîne de publication</h3>
+      <ol class="pipe">
+        <li><b>06:00 UTC</b>Collecte des flux de la veille</li>
+        <li><b>06:10</b>Dédoublonnage et géocodage des événements</li>
+        <li><b>06:20</b>Codage : acteurs, type d’événement, intensité</li>
+        <li><b>06:35</b>Calcul des trois piliers et de la note</li>
+        <li><b>06:45</b>Contrôle éditorial des variations de plus de 1,5 point</li>
+        <li><b>Lundi</b>Bulletin consolidé et archivage de la semaine</li>
+      </ol>
+    </section>
+    <section id="mSim">
+      <h3>Ce qui est simulé dans cette maquette</h3>
+      <ul>
+        <li>Les notes, les séries sur 12 semaines, les événements datés et les chiffres de victimes sont <b>illustratifs</b>. Ils s’inspirent de tendances publiques connues jusqu’à mi-2026 et ne décrivent pas l’actualité réelle de cette semaine.</li>
+        <li>Les indicateurs pays (PIB, population, effort de défense) sont des ordres de grandeur arrondis.</li>
+        <li>Le commerce bilatéral est estimé par un modèle de gravité (taille des économies, distance, blocs commerciaux), pas lu dans UN Comtrade.</li>
+        <li>Les liens « source » renvoient aux jeux de données, pas à des enregistrements précis. En production, chaque événement pointe vers sa ligne d’origine.</li>
+        <li>Le format des données, lui, correspond aux sources listées ci-dessus : brancher les flux réels ne change pas l’interface.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Limites connues</h3>
+      <ul>
+        <li>La couverture médiatique est inégale : les pays très suivis produisent plus d’événements que les autres.</li>
+        <li>Les données commerciales arrivent avec plusieurs mois de retard.</li>
+        <li>Une relation est traitée comme symétrique, alors que la perception peut différer d’un côté et de l’autre.</li>
+        <li>Les acteurs non étatiques (groupes armés, entreprises) n’apparaissent qu’à travers les pays où ils agissent.</li>
+      </ul>
+    </section>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.world.min.js"></script>
+<script>
+function startTheater(LIVE){
+'use strict';
+const $ = (s, el = document) => el.querySelector(s);
+const panel = $('#panel');
+if (!window.d3 || !window.topojson || !window.Datamap) {
+  panel.innerHTML = '<div class="pi"><p class="lede">La carte n’a pas pu se charger : une bibliothèque externe est indisponible. Rechargez la page.</p></div>';
+  return;
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* =====================================================================
+   Calendrier : 12 semaines ISO, de S32 (3 août 2026) à S43 (19 oct. 2026)
+   ===================================================================== */
+const DAY = 864e5, W0 = 32;
+const NW = LIVE ? LIVE.weeks.length : 12;
+const MON0 = LIVE ? Date.parse(LIVE.weeks[0].start + 'T00:00:00Z') : Date.UTC(2026, 7, 3);
+const SPAN = Math.max(1, NW - 1);
+const wkn = i => LIVE ? +LIVE.weeks[i].id.split('-W')[1] : W0 + i;
+const DOC_MIN = LIVE ? LIVE.docMin || 20 : 0;
+const fmtD = new Intl.DateTimeFormat('fr-FR', {day:'numeric', month:'short', timeZone:'UTC'});
+function weekDates(i){
+  const a = new Date(MON0 + i * 7 * DAY), b = new Date(MON0 + (i * 7 + 6) * DAY);
+  const same = a.getUTCMonth() === b.getUTCMonth();
+  return (same ? a.getUTCDate() : fmtD.format(a)) + ' – ' + fmtD.format(b) + ' 2026';
+}
+const nf1 = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1});
+const nf0 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits:0});
+const sgn = v => (v > 0.04 ? '+' : v < -0.04 ? '−' : '') + nf1.format(Math.abs(v));
+const delta = v => Math.abs(v) < 0.25 ? '= stable' : (v > 0 ? '▲ ' : '▼ ') + sgn(v);
+const pl = (n, one, many) => n + ' ' + (n > 1 ? many : one);
+
+/* =====================================================================
+   Échelle des relations
+   ===================================================================== */
+const LEVELS = [
+  {k:-3, name:'Conflit armé', short:'Conflit', range:'−10 à −7', desc:'Affrontements armés directs ou guerre ouverte.'},
+  {k:-2, name:'Hostilité', short:'Hostilité', range:'−7 à −4', desc:'Sanctions, rupture diplomatique, incidents militaires, menaces explicites.'},
+  {k:-1, name:'Tension', short:'Tension', range:'−4 à −1,5', desc:'Différends ouverts : commerce, frontières, déclarations hostiles.'},
+  {k:0, name:'Neutre', short:'Neutre', range:'−1,5 à +1,5', desc:'Relations limitées ou équilibrées, sans enjeu majeur.'},
+  {k:1, name:'Cordial', short:'Cordial', range:'+1,5 à +4', desc:'Relations diplomatiques normales, échanges réguliers.'},
+  {k:2, name:'Partenariat', short:'Partenaire', range:'+4 à +7', desc:'Coopération étroite : accords commerciaux et sécuritaires, visites fréquentes.'},
+  {k:3, name:'Alliance', short:'Alliance', range:'+7 à +10', desc:'Traité de défense ou intégration poussée.'}
+];
+const LV = k => LEVELS[k + 3];
+const lvl = s => s <= -7 ? -3 : s <= -4 ? -2 : s <= -1.5 ? -1 : s < 1.5 ? 0 : s < 4 ? 1 : s < 7 ? 2 : 3;
+const LCOL = k => 'var(--s' + k + ')';
+const EVO = [
+  {k:-2, name:'Nette dégradation', col:'var(--s-2)'},
+  {k:-1, name:'Dégradation', col:'var(--s-1)'},
+  {k:0, name:'Stable', col:'var(--s0)'},
+  {k:1, name:'Amélioration', col:'var(--s1)'},
+  {k:2, name:'Nette amélioration', col:'var(--s2)'}
+];
+const evoLvl = d => d <= -1.5 ? -2 : d <= -0.5 ? -1 : d < 0.5 ? 0 : d < 1.5 ? 1 : 2;
+const ECOL = k => EVO[k + 2].col;
+const pill = (k, cls = '') => `<span class="pill ${cls}"><i style="background:${LCOL(k)}"></i>${LV(k).name}</span>`;
+
+/* =====================================================================
+   Pays : noms, indicateurs (ordres de grandeur arrondis)
+   [PIB Md$, population M, défense % PIB, proximité de vote ONU −1..1, nucléaire 1 = oui, 2 = non déclaré]
+   ===================================================================== */
+const CD = {
+USA:[29200,340,3.4,1,1],CAN:[2240,41,1.4,.85],MEX:[1850,131,.7,.35],GTM:[110,18,.4,.4],HND:[37,10.6,1.5,.2],SLV:[36,6.3,1.2,.35],NIC:[19,7,.6,-.6],CRI:[95,5.2,0,.45],PAN:[87,4.5,0,.45],CUB:[110,11,2.9,-.7],DOM:[125,11.4,.7,.45],HTI:[25,11.8,.1,.25],JAM:[20,2.8,1.3,.35],COL:[420,52.7,3,.3],VEN:[100,28.4,.6,-.6],GUY:[25,.8,.8,.4],SUR:[4.5,.6,.6,.2],ECU:[125,18.1,2.2,.35],PER:[290,34.2,1.1,.3],BOL:[50,12.4,1.3,-.1],BRA:[2200,212,1.1,.1],PRY:[45,6.9,1,.4],URY:[82,3.4,2,.35],ARG:[640,45.7,.5,.55],CHL:[330,19.7,1.6,.4],
+GBR:[3640,69,2.3,.95,1],FRA:[3160,68.4,2.1,.85,1],DEU:[4660,84,2.1,.85],ITA:[2370,59,1.5,.85],ESP:[1730,48.6,1.3,.8],PRT:[300,10.6,1.6,.8],NLD:[1220,18,2,.9],BEL:[665,11.8,1.3,.85],LUX:[90,.67,.7,.85],IRL:[580,5.3,.2,.75],CHE:[940,9,.7,.75],AUT:[525,9.1,.8,.7],DNK:[410,6,2.4,.9],NOR:[485,5.6,2.2,.9],SWE:[600,10.6,2.2,.9],FIN:[300,5.6,2.4,.9],ISL:[33,.4,0,.85],EST:[42,1.37,3.4,.95],LVA:[44,1.87,3.2,.95],LTU:[80,2.89,3,.95],POL:[915,36.6,4.2,.95],CZE:[345,10.9,2,.85],SVK:[140,5.4,2,.55],HUN:[222,9.6,2.1,.35],ROU:[380,19,2.2,.85],BGR:[112,6.4,2,.7],GRC:[255,10.4,3.1,.75],CYP:[35,1.3,1.8,.7],SVN:[72,2.1,1.3,.8],HRV:[92,3.9,1.8,.8],BIH:[29,3.2,.8,.4],SRB:[85,6.6,2.3,.1],MNE:[8,.62,1.6,.75],MKD:[16,1.8,1.7,.75],ALB:[27,2.7,1.8,.8],XKX:[11,1.6,1,.8],MDA:[18,2.4,.5,.7],UKR:[190,33,26,.85],BLR:[76,9.1,1.3,-.9],
+RUS:[2160,144,7.1,-1,1],GEO:[33,3.7,1.7,.1],ARM:[25,3,4.5,.25],AZE:[75,10.2,4.5,.1],KAZ:[290,20.3,.6,-.2],UZB:[115,37,3,-.1],TKM:[80,7.3,1,-.1],KGZ:[17,7.1,1.5,-.4],TJK:[14,10.3,1,-.4],
+CHN:[18750,1410,1.7,-.7,1],JPN:[4100,124,1.4,.9],KOR:[1760,51.7,2.6,.85],PRK:[25,26,20,-1,1],TWN:[800,23.4,2.5,.85],MNG:[21,3.5,.8,.2],IND:[3900,1440,2.3,.2,1],PAK:[375,245,2.8,-.2,1],AFG:[17,42,0,-.4],BGD:[455,173,1,.1],LKA:[85,22,1.5,.1],NPL:[42,30,1.2,0],BTN:[3,.8,0,.1],MMR:[65,54,3.2,-.5],THA:[520,71.7,1.3,.3],KHM:[46,17.6,2.1,-.4],LAO:[15,7.7,.2,-.4],VNM:[470,101,2,0],MYS:[420,34,1,.2],SGP:[530,6,2.8,.55],IDN:[1400,281,.7,.15],PHL:[460,115,1.3,.75],BRN:[15,.46,2.6,.3],TLS:[2,1.4,1,.4],
+AUS:[1800,27,2,.95],NZL:[255,5.2,1.1,.9],PNG:[32,10.3,.3,.6],FJI:[5.5,.9,1.4,.5],
+IRN:[400,90,2,-.9],IRQ:[265,46,2.2,-.1],SYR:[20,23,1,.1],ISR:[540,9.9,8.8,.9,2],PSE:[18,5.5,0,0],LBN:[25,5.8,3,.2],JOR:[53,11.5,4.8,.6],SAU:[1100,34,7.1,.35],ARE:[540,10,5,.4],QAT:[220,3,4,.45],KWT:[160,4.9,4.8,.5],BHR:[47,1.6,3.5,.55],OMN:[105,5.3,6,.3],YEM:[20,40,0,-.5],TUR:[1340,86,1.6,.4],
+EGY:[390,116,1,.3],LBY:[45,7.4,1.5,-.1],TUN:[52,12.3,2.5,.2],DZA:[265,47,8,-.3],MAR:[155,38,3.7,.55],MRT:[11,5,2,.1],MLI:[22,23.8,4,-.6],BFA:[22,23.5,4.5,-.6],NER:[19,27,3,-.6],TCD:[20,19.3,2.5,-.1],SDN:[30,50,3,-.3],SSD:[5,11.5,3,-.1],ETH:[200,128,1,-.1],ERI:[3,3.7,10,-.5],DJI:[4,1.1,3,.3],SOM:[12,18.7,0,.2],KEN:[115,56,1,.45],UGA:[55,49,2,.1],RWA:[14,14,1.3,.2],BDI:[3,13.7,2.2,-.1],COD:[70,109,1.2,.25],COG:[15,6.3,2,-.1],CAF:[3,5.9,2,-.6],CMR:[50,29,1,.1],GAB:[21,2.5,1.5,.2],GNQ:[12,1.7,1,-.1],NGA:[250,230,.6,.2],GHA:[80,34,.5,.4],CIV:[85,31,1.2,.4],SEN:[33,18.5,1.6,.25],GIN:[24,14.5,1.5,-.1],SLE:[7,8.6,.5,.2],LBR:[5,5.5,.5,.4],TGO:[10,9.3,2,.1],BEN:[21,14,.7,.2],GMB:[2.5,2.8,.5,.3],GNB:[2,2.2,1.5,.1],AGO:[85,37,1.3,.1],ZAF:[400,63,.7,0],NAM:[13,3,3,.1],BWA:[19,2.5,2.5,.3],ZWE:[35,16.6,.6,-.4],ZMB:[26,21,1.2,.2],MOZ:[22,34,1.2,.1],MWI:[11,21,.6,.2],TZA:[80,68,1,.1],MDG:[16,31,.6,.1],LSO:[2.4,2.3,1.5,.2],SWZ:[4.6,1.2,1.5,.3]
+};
+const ORGS = {
+  UE:'AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX NLD POL PRT ROU SVK SVN ESP SWE',
+  OTAN:'ALB BEL BGR CAN HRV CZE DNK EST FIN FRA DEU GRC HUN ISL ITA LVA LTU LUX MNE NLD MKD NOR POL PRT ROU SVK SVN ESP SWE TUR GBR USA',
+  G7:'USA CAN GBR FRA DEU ITA JPN',
+  G20:'ARG AUS BRA CAN CHN FRA DEU IND IDN ITA JPN KOR MEX RUS SAU ZAF TUR GBR USA',
+  BRICS:'BRA RUS IND CHN ZAF EGY ETH IRN ARE IDN',
+  OCS:'CHN RUS KAZ KGZ TJK UZB IND PAK IRN BLR',
+  OTSC:'RUS BLR KAZ KGZ TJK',
+  CCG:'SAU ARE QAT KWT OMN BHR',
+  ASEAN:'BRN KHM IDN LAO MYS MMR PHL SGP THA VNM TLS',
+  MERCOSUR:'ARG BRA PRY URY BOL',
+  UA:'AGO BDI BEN BWA CAF CIV CMR COD COG DJI DZA EGY ERI ETH GAB GHA GMB GNB GNQ KEN LBR LBY LSO MAR MDG MOZ MRT MWI NAM NGA RWA SEN SLE SOM SSD SWZ TCD TGO TUN TZA UGA ZAF ZMB ZWE',
+  AES:'MLI BFA NER',
+  QUAD:'USA JPN IND AUS',
+  AUKUS:'USA GBR AUS'
+};
+const ORG_LABEL = {UE:'UE',OTAN:'OTAN',G7:'G7',G20:'G20',BRICS:'BRICS',OCS:'OCS',OTSC:'OTSC',CCG:'CCG',ASEAN:'ASEAN',MERCOSUR:'Mercosur',UA:'Union africaine',AES:'AES',QUAD:'Quad',AUKUS:'AUKUS'};
+const ORG_BONUS = {UE:3, OTAN:2, CCG:2, ASEAN:1.2, UA:.8, MERCOSUR:1.5, OTSC:2, OCS:.8, BRICS:.6, AES:5, QUAD:1.5, AUKUS:1.5, G7:1};
+const SANCT_SRC = new Set((ORGS.UE + ' USA GBR CAN JPN KOR AUS NZL CHE NOR ISL').split(' '));
+const SANCT_TGT = new Set(['RUS','BLR','IRN','PRK']);
+const SANCT_PAIRS = new Set(['CUB|USA', 'USA|VEN', 'NIC|USA']);
+// Traités de défense hors organisations multilatérales (clé triée).
+const TREATY = {'JPN|USA':'Traité de sécurité nippo-américain (1960)', 'KOR|USA':'Traité de défense mutuelle (1953)', 'AUS|USA':'ANZUS (1951)', 'AUS|NZL':'ANZUS (1951)', 'PHL|USA':'Traité de défense mutuelle (1951)', 'BLR|RUS':'État de l’Union, OTSC', 'PRK|RUS':'Traité de partenariat stratégique global (2024)', 'CHN|PRK':'Traité d’amitié et d’assistance mutuelle (1961)', 'AZE|TUR':'Déclaration de Choucha (2021)', 'PAK|SAU':'Accord stratégique de défense mutuelle (2025)', 'FRA|GRC':'Partenariat stratégique de défense (2021)'};
+
+const I2 = Object.fromEntries('AFG:AF AGO:AO ALB:AL ARE:AE ARG:AR ARM:AM ATF:TF AUS:AU AUT:AT AZE:AZ BDI:BI BEL:BE BEN:BJ BFA:BF BGD:BD BGR:BG BHS:BS BIH:BA BLR:BY BLZ:BZ BOL:BO BRA:BR BRN:BN BTN:BT BWA:BW CAF:CF CAN:CA CHE:CH CHL:CL CHN:CN CIV:CI CMR:CM COD:CD COG:CG COL:CO CRI:CR CUB:CU CYP:CY CZE:CZ DEU:DE DJI:DJ DNK:DK DOM:DO DZA:DZ ECU:EC EGY:EG ERI:ER ESP:ES EST:EE ETH:ET FIN:FI FJI:FJ FLK:FK FRA:FR GUF:GF GAB:GA GBR:GB GEO:GE GHA:GH GIN:GN GMB:GM GNB:GW GNQ:GQ GRC:GR GRL:GL GTM:GT GUY:GY HND:HN HRV:HR HTI:HT HUN:HU IDN:ID IND:IN IRL:IE IRN:IR IRQ:IQ ISL:IS ISR:IL ITA:IT JAM:JM JOR:JO JPN:JP KAZ:KZ KEN:KE KGZ:KG KHM:KH KOR:KR KWT:KW LAO:LA LBN:LB LBR:LR LBY:LY LKA:LK LSO:LS LTU:LT LUX:LU LVA:LV MAR:MA MDA:MD MDG:MG MEX:MX MKD:MK MLI:ML MMR:MM MNE:ME MNG:MN MOZ:MZ MRT:MR MWI:MW MYS:MY NAM:NA NCL:NC NER:NE NGA:NG NIC:NI NLD:NL NOR:NO NPL:NP NZL:NZ OMN:OM PAK:PK PAN:PA PER:PE PHL:PH PNG:PG POL:PL PRI:PR PRK:KP PRT:PT PRY:PY QAT:QA ROU:RO RUS:RU RWA:RW ESH:EH SAU:SA SDN:SD SSD:SS SEN:SN SLB:SB SLE:SL SLV:SV SOM:SO SRB:RS SUR:SR SVK:SK SVN:SI SWE:SE SWZ:SZ SYR:SY TCD:TD TGO:TG THA:TH TJK:TJ TKM:TM TLS:TL TTO:TT TUN:TN TUR:TR TWN:TW TZA:TZ UGA:UG UKR:UA URY:UY USA:US UZB:UZ VEN:VE VNM:VN VUT:VU PSE:PS YEM:YE ZAF:ZA ZMB:ZM ZWE:ZW BHR:BH SGP:SG XKX:XK MUS:MU'.split(' ').map(p => p.split(':')));
+const NAME_FIX = {COD:'RD Congo', COG:'Congo', PSE:'Palestine', MMR:'Birmanie', XKX:'Kosovo', ESH:'Sahara occidental', NCY:'Chypre du Nord', SOL:'Somaliland', USA:'États-Unis', GBR:'Royaume-Uni', CAF:'Centrafrique', TLS:'Timor oriental', FLK:'Malouines', ATF:'Terres australes françaises', MUS:'Maurice'};
+let DN = null; try { DN = new Intl.DisplayNames(['fr'], {type:'region'}); } catch (e) {}
+const EN = {};
+function nm(iso){
+  if (NAME_FIX[iso]) return NAME_FIX[iso];
+  const i2 = I2[iso];
+  if (DN && i2) { try { const n = DN.of(i2); if (n && n !== i2) return n; } catch (e) {} }
+  return EN[iso] || iso;
+}
+
+/* ---------- Géographie ---------- */
+const topo = Datamap.prototype.worldTopo;
+const objName = Object.keys(topo.objects)[0];
+const FEATS = topojson.feature(topo, topo.objects[objName]).features.filter(f => f.id !== 'ATA');
+FEATS.forEach(f => {
+  if (f.id === '-99') {
+    const n = (f.properties && f.properties.name) || '';
+    f.id = /cyprus/i.test(n) ? 'NCY' : /kosovo/i.test(n) ? 'XKX' : /somali/i.test(n) ? 'SOL' : 'UNK';
+  }
+  EN[f.id] = f.properties && f.properties.name;
+});
+const TERR = {GRL:'DNK', GUF:'FRA', NCL:'FRA', ATF:'FRA', PRI:'USA', FLK:'GBR'};
+const NONSTATE = {ESH:'Territoire au statut disputé', NCY:'Entité reconnue par la seule Turquie', SOL:'Entité autoproclamée, très peu reconnue', UNK:'Territoire'};
+const MICRO = {BHR:[50.55,26.07], SGP:[103.82,1.35]};
+const ANCHOR = {RUS:[37.6,55.75], USA:[-98,39], CAN:[-100,56], FRA:[2.5,46.7], NOR:[9.5,61], CHL:[-71,-33.5], IDN:[113,-2], MYS:[102,4], JPN:[138.5,36.2], NZL:[174.5,-41], GBR:[-1.6,52.6], ITA:[12.6,42.8], PHL:[121,14.5], DNK:[9.3,56], GRC:[22,39.3], VNM:[105.8,21], CHN:[105,34.5], BRA:[-51,-11], AUS:[134,-25.5], IND:[78.5,22], PSE:[34.6,31.6], ISR:[34.9,32.2], LBN:[35.8,33.9], HRV:[15.6,45.5], KHM:[104.9,12.6]};
+function mainCentroid(f){
+  const g = f.geometry; if (!g) return [0,0];
+  if (g.type === 'Polygon') return d3.geoCentroid(f);
+  let best = null, ba = -1;
+  for (const c of g.coordinates) { const p = {type:'Polygon', coordinates:c}; const a = d3.geoArea(p); if (a > ba) { ba = a; best = p; } }
+  return d3.geoCentroid(best);
+}
+FEATS.forEach(f => { f.cen = mainCentroid(f); });
+const C = {};
+const ORG_OF = {};
+for (const [o, list] of Object.entries(ORGS)) for (const iso of list.split(' ')) (ORG_OF[iso] = ORG_OF[iso] || new Set()).add(o);
+function addCountry(iso, anchor){
+  const d = CD[iso];
+  C[iso] = {iso, name:nm(iso), gdp:d ? d[0] : 12, pop:d ? d[1] : 4, mil:d ? d[2] : 1.2, wa:d ? d[3] : .15, nuke:d ? (d[4] || 0) : 0, has:!!d, orgs:ORG_OF[iso] || new Set(), anchor};
+}
+FEATS.forEach(f => { if (!TERR[f.id] && !NONSTATE[f.id]) addCountry(f.id, ANCHOR[f.id] || mainCentroid(f)); });
+for (const [iso, ll] of Object.entries(MICRO)) addCountry(iso, ll);
+const ISOS = Object.keys(C).sort((a, b) => C[a].name.localeCompare(C[b].name, 'fr'));
+const ART_P = new Set('USA NLD ARE PHL FJI BHS SLB'.split(' '));
+const ART_N = new Set('ISR CUB HTI TWN SGP MDG CYP DJI OMN BHR MUS VUT'.split(' '));
+const ART_M = new Set('MEX KHM MOZ ZWE BLZ SUR'.split(' '));
+const ART_F = new Set('PRK KOR MKD GNB COD'.split(' '));
+function art(iso){
+  const n = C[iso] ? C[iso].name : nm(iso);
+  if (ART_N.has(iso)) return '';
+  if (ART_P.has(iso)) return 'les ';
+  if (/^[AEIOUÉÈÊÎÔ]/.test(n)) return 'l’';
+  if (ART_M.has(iso)) return 'le ';
+  if (ART_F.has(iso)) return 'la ';
+  return /e$/.test(n) ? 'la ' : 'le ';
+}
+const the = iso => art(iso) + C[iso].name;
+const ofThe = iso => { const a = art(iso), n = C[iso].name; return a === 'le ' ? 'du ' + n : a === 'les ' ? 'des ' + n : a ? 'de ' + a + n : (/^[AEIOUÉÈÊÎÔH]/.test(n) ? 'd’' : 'de ') + n; };
+
+/* ---------- Aléa déterministe ---------- */
+function hash(s){ let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const key = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+
+/* =====================================================================
+   Commerce : modèle de gravité calibré (≈ 585 Md$ Chine–États-Unis avant droits de douane)
+   ===================================================================== */
+const DIST = new Map();
+function distKm(a, b){ const k = key(a, b); if (!DIST.has(k)) DIST.set(k, d3.geoDistance(C[a].anchor, C[b].anchor) * 6371); return DIST.get(k); }
+const TRADE_X = {'MEX|USA':2.7, 'CAN|USA':2.2, 'CHN|RUS':2.4, 'IND|RUS':2, 'CHN|KOR':1.6, 'CHN|VNM':2, 'TUR|RUS':1.5, 'ARE|IND':1.8};
+const rawTradeU = (a, b) => Math.pow(C[a].gdp * C[b].gdp, .9) / Math.pow(Math.max(distKm(a, b), 800), .8);
+const TK = 585 / rawTradeU('USA', 'CHN');
+const rawTrade = (a, b) => rawTradeU(a, b) * TK * (TRADE_X[key(a, b)] || 1);
+
+/* =====================================================================
+   Relations documentées (illustratives) : note S43, variation linéaire sur 12 semaines,
+   rupture éventuelle [semaine, saut], piliers [diplomatie, économie, sécurité], événements.
+   ===================================================================== */
+const PLIST = [];
+function R(a, b, s, tr, sum, o = {}){ PLIST.push(Object.assign({a, b, s, tr, sum}, o)); }
+
+if (!LIVE) {
+R('RUS','UKR',-9.3,-.2,'Guerre ouverte depuis février 2022. Le front reste actif à l’est et au sud, avec des frappes quotidiennes de part et d’autre.',{p:[-9.2,-9.6,-9.4],ev:[[43,'frappe','Vague de drones et de missiles contre le réseau électrique ukrainien','ACLED'],[42,'combat','Combats de forte intensité dans l’oblast de Donetsk','ACLED'],[41,'frappe','Frappes ukrainiennes de drones contre des raffineries en Russie','ACLED'],[39,'diplo','Échange de prisonniers sous médiation internationale','GDELT'],[36,'diplo','Nouveau cycle de pourparlers, sans avancée sur un cessez-le-feu','GDELT']]});
+R('ISR','PSE',-7.6,.5,'Conflit armé de moindre intensité depuis le cessez-le-feu d’octobre 2025 à Gaza : frappes ponctuelles et crise humanitaire persistante.',{ev:[[43,'frappe','Frappes aériennes ponctuelles dans le sud de la bande de Gaza','ACLED'],[41,'incident','Violences entre colons et Palestiniens en Cisjordanie','ACLED'],[38,'diplo','Négociations indirectes sur la suite du cessez-le-feu','GDELT']]});
+R('IRN','ISR',-6.6,-.5,'Hostilité ouverte depuis la guerre de juin 2025. Menaces réciproques autour du programme nucléaire iranien.',{ev:[[42,'declar','Menaces de nouvelles frappes contre des sites nucléaires','GDELT'],[40,'incident','Cyberattaque attribuée à l’Iran contre des infrastructures israéliennes','GDELT'],[35,'sanction','Nouvelles sanctions occidentales visant le programme balistique iranien','OPENSANCTIONS']]});
+R('ISR','LBN',-5.4,-.4,'Frappes israéliennes régulières au Sud-Liban malgré le cessez-le-feu de novembre 2024.');
+R('ISR','YEM',-6.9,0,'Tirs de missiles houthis vers Israël et frappes israéliennes en représailles sur le port de Hodeïda.');
+R('IRN','USA',-6.1,-.2,'Pas de relations diplomatiques. Sanctions maximales, menaces militaires, négociations nucléaires suspendues.');
+R('USA','YEM',-4.5,.3,'Frappes américaines intermittentes contre les Houthis, menace sur la navigation en mer Rouge.');
+R('IRN','SAU',1.3,.1,'Détente depuis l’accord de 2023 négocié par Pékin : ambassades rouvertes, méfiance stratégique intacte.');
+R('USA','VEN',-3.9,.9,'Relation instable : présence militaire américaine dans les Caraïbes, sanctions pétrolières, négociations intermittentes.');
+R('GUY','VEN',-4.3,-.1,'Différend territorial sur l’Essequibo, région riche en pétrole administrée par le Guyana.');
+R('CHN','TWN',-5.7,-.5,'Pression militaire constante de Pékin : incursions aériennes quotidiennes et grandes manœuvres autour de l’île.',{ev:[[42,'exercice','Manœuvres aéronavales chinoises autour de Taïwan','GDELT'],[39,'incident','Nombre record d’appareils militaires dans la zone d’identification aérienne','GDELT'],[34,'sanction','Pékin sanctionne des entreprises d’armement liées à Taïwan','OPENSANCTIONS']]});
+R('CHN','USA',-3.6,.4,'Rivalité stratégique : droits de douane, contrôles des exportations technologiques, Taïwan. Les échanges restent parmi les plus importants au monde.',{p:[-4.5,1.5,-6],ev:[[43,'commerce','Prolongation de la trêve tarifaire de 90 jours','GDELT'],[41,'sanction','Nouvelles restrictions américaines sur les puces avancées','OPENSANCTIONS'],[38,'diplo','Entretien téléphonique entre les deux présidents','GDELT'],[35,'incident','Interception rapprochée d’un avion de patrouille en mer de Chine','GDELT']]});
+R('CHN','JPN',-4.3,-.3,'Crispation depuis fin 2025 après des déclarations japonaises sur Taïwan : avertissements aux voyageurs, pressions économiques.',{shock:[38,-.8],ev:[[41,'commerce','Pékin suspend des importations de produits de la mer japonais','GDELT'],[38,'incident','Patrouilles chinoises près des îles Senkaku','GDELT']]});
+R('CHN','PHL',-5.1,-.6,'Incidents répétés en mer de Chine méridionale autour des récifs disputés : canons à eau, abordages.',{ev:[[43,'incident','Canon à eau contre un navire philippin près du récif de Scarborough','GDELT'],[40,'exercice','Patrouille conjointe Philippines–États-Unis–Japon','GDELT']]});
+R('CHN','IND',-.5,1.2,'Dégel progressif depuis fin 2024 : désengagement à la frontière himalayenne, reprise des vols directs.');
+R('CHN','RUS',6.6,.2,'Partenariat stratégique : énergie, coordination à l’ONU, exercices conjoints. Pékin est le premier client du pétrole russe.',{p:[7.4,6.5,6]});
+R('CHN','PRK',6.3,.3,'Seul allié formel de Pyongyang, principal partenaire commercial.',{treaty:'Traité d’amitié et d’assistance mutuelle (1961)'});
+R('CHN','PAK',7.9,0,'Partenaires « à toute épreuve » : armement, corridor économique sino-pakistanais.');
+R('PRK','RUS',7.7,.2,'Défense mutuelle depuis 2024 : troupes nord-coréennes engagées aux côtés de la Russie, munitions contre technologie.',{treaty:'Traité de partenariat stratégique global (2024)'});
+R('BLR','RUS',9.1,0,'Union politique et militaire ; armes nucléaires tactiques russes stationnées au Bélarus.',{treaty:'État de l’Union, OTSC'});
+R('IRN','RUS',5.2,0,'Traité de partenariat stratégique (2025) sans clause de défense ; coopération militaire et contournement des sanctions.');
+R('IND','RUS',4.5,-.3,'Partenaire historique : pétrole à prix réduit et armement, sous pression des sanctions occidentales.');
+R('RUS','USA',-4.6,-.5,'Dialogue intermittent sur l’Ukraine, sanctions maintenues, plus aucun traité de limitation des armements nucléaires depuis l’expiration de New START en février 2026.',{p:[-3.5,-7,-4],ev:[[42,'diplo','Rencontre des ministres des Affaires étrangères, sans percée','GDELT'],[40,'sanction','Sanctions américaines contre des compagnies pétrolières russes','OPENSANCTIONS'],[37,'declar','Échange d’avertissements sur une reprise des essais nucléaires','GDELT']]});
+R('FRA','RUS',-5.8,-.4,'Sanctions européennes, soutien militaire français à l’Ukraine, cyberattaques et désinformation attribuées à Moscou.',{p:[-6.2,-6.5,-5],ev:[[43,'incident','Réseau de désinformation visant la France démantelé, attribué à la Russie','GDELT'],[41,'sanction','Nouveau paquet de sanctions européennes contre la « flotte fantôme »','OPENSANCTIONS'],[38,'incident','Survols de drones non identifiés au-dessus de sites militaires','GDELT'],[35,'declar','Paris annonce de nouvelles livraisons d’armes à Kyiv','GDELT']]});
+R('DEU','RUS',-5.7,-.3,'Sanctions, soutien militaire allemand à l’Ukraine, sabotages et espionnage attribués à Moscou.');
+R('GBR','RUS',-6.2,-.2,'Sanctions, soutien militaire à l’Ukraine, expulsions de diplomates, incidents navals en mer du Nord.');
+R('POL','RUS',-6.8,-.4,'Incursions de drones dans l’espace aérien polonais, sabotages sur le réseau ferroviaire, fermeture de consulats.',{shock:[42,-.6],ev:[[42,'incident','Drone russe abattu au-dessus de l’est de la Pologne','ACLED'],[39,'incident','Sabotage d’une voie ferrée utilisée pour l’aide à l’Ukraine','GDELT'],[36,'diplo','Fermeture d’un consulat russe','GDELT']]});
+R('EST','RUS',-6.6,-.3,'Violations d’espace aérien, brouillage GPS, incidents en mer Baltique.');
+R('LVA','RUS',-6.4,-.3,'Brouillage GPS, pressions migratoires à la frontière, incidents en mer Baltique.');
+R('LTU','RUS',-6.5,-.3,'Ballons et drones venus du Bélarus, frontière fermée, sanctions.');
+R('FIN','RUS',-6,-.2,'Frontière fermée depuis 2023, instrumentalisation des flux migratoires, câbles sous-marins endommagés.');
+R('SWE','RUS',-5.5,-.2,'Adhésion à l’OTAN en 2024, incidents en mer Baltique, sanctions.');
+R('JPN','RUS',-4.8,-.1,'Sanctions japonaises, pas de traité de paix, différend sur les Kouriles.');
+R('MDA','RUS',-4.3,-.2,'Ingérences électorales dénoncées par Chisinau, troupes russes en Transnistrie.');
+R('GEO','RUS',-2.6,.7,'Rapprochement prudent du gouvernement géorgien avec Moscou, malgré l’occupation de 20 % du territoire.');
+R('ARM','RUS',-2.2,-.8,'L’Arménie s’éloigne de Moscou : participation à l’OTSC gelée, rapprochement avec l’UE et la France.');
+R('AZE','RUS',-3.4,-.3,'Tensions depuis le crash d’un avion d’Azerbaijan Airlines (déc. 2024) et l’arrestation de ressortissants azerbaïdjanais en Russie.');
+R('ARM','AZE',-.7,1.5,'Processus de paix depuis l’accord paraphé à Washington en août 2025 : ouverture progressive de la frontière et d’une route de transit.',{shock:[40,.9],ev:[[43,'accord','Accord sur la délimitation d’un premier tronçon de frontière','GDELT'],[40,'diplo','Rencontre des ministres des Affaires étrangères à Abou Dhabi','GDELT'],[36,'commerce','Premières livraisons de carburant par la route','GDELT']]});
+R('AZE','TUR',8.6,0,'« Une nation, deux États » : alliance militaire, énergétique et politique.',{treaty:'Déclaration de Choucha (2021)'});
+R('GRC','TUR',-1.6,.2,'Différends en mer Égée et sur Chypre, dialogue maintenu.');
+R('SYR','TUR',5.4,.5,'Principal soutien du nouveau pouvoir syrien : coopération militaire et reconstruction.');
+R('ISR','SYR',-3.9,.8,'Frappes israéliennes en Syrie et négociations sur un accord de sécurité dans le sud du pays.');
+R('ISR','TUR',-4.9,-.6,'Rupture commerciale décidée par Ankara en 2024, rivalité en Syrie, rhétorique hostile.');
+R('EGY','ISR',1.8,-.3,'Paix froide : coopération sécuritaire et gazière, critiques égyptiennes sur Gaza.');
+R('ISR','JOR',1.2,-.2,'Traité de paix de 1994, relation politique au plus bas depuis la guerre à Gaza.');
+R('ARE','ISR',3.4,-.4,'Accords d’Abraham (2020) maintenus mais mis à l’épreuve par la guerre à Gaza.');
+R('ISR','QAT',-3.6,.4,'Frappe israélienne à Doha en septembre 2025 ; le Qatar reste médiateur sur Gaza.');
+R('ISR','USA',8.2,0,'Soutien militaire et diplomatique majeur.',{treaty:'Protocole d’aide militaire 2019–2028'});
+R('JPN','USA',8.4,0,'Pilier de la sécurité en Asie : plus de 50 000 militaires américains au Japon.',{treaty:'Traité de sécurité nippo-américain (1960)'});
+R('KOR','USA',7.6,0,'Alliance face à la Corée du Nord, différends sur le partage des coûts.',{treaty:'Traité de défense mutuelle (1953)'});
+R('AUS','USA',8.6,0,'Alliance intégrée : renseignement, sous-marins nucléaires.',{treaty:'ANZUS (1951), AUKUS (2021)'});
+R('GBR','USA',8.4,0,'« Relation spéciale » : renseignement (Five Eyes), dissuasion nucléaire, OTAN.',{treaty:'OTAN, AUKUS'});
+R('PHL','USA',7.4,.3,'Alliance relancée face à la Chine : accès élargi des forces américaines.',{treaty:'Traité de défense mutuelle (1951)'});
+R('TWN','USA',6.3,0,'Soutien militaire sans reconnaissance diplomatique formelle.',{treaty:'Taiwan Relations Act (1979)'});
+R('CAN','USA',3.7,-.6,'Alliés (OTAN, NORAD), mais les droits de douane américains et les propos sur une annexion ont fortement dégradé la relation depuis 2025.',{p:[2,1.5,6.5],ev:[[42,'commerce','Révision de l’accord ACEUM : pas d’accord sur l’acier et l’automobile','GDELT'],[39,'declar','Le boycott des produits américains se poursuit au Canada','GDELT'],[34,'exercice','Exercice NORAD conjoint dans l’Arctique','GDELT']]});
+R('MEX','USA',3.2,-.3,'Interdépendance économique forte ; pressions américaines sur les cartels, la migration et les droits de douane.');
+R('DNK','USA',3.1,-.5,'Alliés de l’OTAN, mais la volonté américaine de contrôler le Groenland crée une crise diplomatique inédite.',{p:[.4,3,5.8],shock:[41,-.7],ev:[[43,'declar','Washington réaffirme son intérêt stratégique pour le Groenland','GDELT'],[41,'diplo','Convocation de l’ambassadeur américain à Copenhague','GDELT'],[37,'incident','Polémique sur des opérations d’influence américaines au Groenland','GDELT']]});
+R('FRA','USA',5.3,-.3,'Alliés de l’OTAN ; désaccords sur le commerce, l’Ukraine et l’autonomie stratégique européenne.');
+R('DEU','USA',5.5,-.2,'Alliés de l’OTAN ; droits de douane et pressions sur les dépenses de défense.');
+R('IND','USA',2.7,-1.3,'Partenaires stratégiques (Quad), mais différends commerciaux et achats indiens de pétrole russe pèsent sur la relation.',{p:[2,-.5,5.4]});
+R('BRA','USA',1.3,.5,'Différends commerciaux et politiques en 2025, détente partielle depuis.');
+R('USA','ZAF',-1.9,-.2,'Différends diplomatiques depuis 2025 : expulsion d’ambassadeur, aide coupée, tensions autour du G20.');
+R('CUB','USA',-5,-.2,'Embargo depuis 1962, durci en 2025.');
+R('PRK','USA',-6.2,-.1,'Programme nucléaire et balistique nord-coréen, sanctions, aucun dialogue.');
+R('KOR','PRK',-6,-.2,'Ballons, brouillage, fortification de la frontière ; aucun canal de dialogue.');
+R('JPN','PRK',-5.6,-.1,'Tirs de missiles au-dessus ou près du Japon, question des enlèvements.');
+R('JPN','KOR',4.7,.4,'Rapprochement sécuritaire face à la Corée du Nord, contentieux historiques apaisés.');
+R('IND','PAK',-6.4,-.2,'Hostilité durable depuis les affrontements de mai 2025 : traité de l’Indus suspendu, frontière fermée.',{ev:[[42,'incident','Échanges de tirs sur la ligne de contrôle au Cachemire','ACLED'],[39,'declar','Islamabad dénonce la gestion indienne des eaux de l’Indus','GDELT'],[33,'sanction','Prolongation de la fermeture réciproque des espaces aériens','GDELT']]});
+R('AFG','PAK',-6.3,-.4,'Affrontements frontaliers répétés depuis octobre 2025 ; Islamabad accuse Kaboul d’abriter les talibans pakistanais (TTP).',{shock:[41,-1.4],ev:[[43,'combat','Duels d’artillerie le long de la ligne Durand','ACLED'],[41,'frappe','Frappes aériennes pakistanaises dans l’est de l’Afghanistan','ACLED'],[38,'diplo','Échec d’une médiation qatarie et turque','GDELT'],[35,'commerce','Fermeture des points de passage commerciaux','GDELT']]});
+R('PAK','SAU',7.6,0,'Pacte de défense mutuelle depuis septembre 2025, financement saoudien de l’économie pakistanaise.',{treaty:'Accord stratégique de défense mutuelle (2025)'});
+R('FRA','IND',6.3,.2,'Partenariat stratégique : Rafale, sous-marins, espace, nucléaire civil.');
+R('BGD','IND',-2.7,-.4,'Refroidissement depuis la chute de Sheikh Hasina en 2024, réfugiée en Inde.');
+R('KHM','THA',-4.5,1,'Affrontements frontaliers meurtriers en juillet 2025, cessez-le-feu fragile sous médiation.');
+R('COD','RWA',-5.6,.9,'Soutien rwandais au M23 dans l’est de la RDC ; accords de paix signés en 2025 mais combats persistants.',{ev:[[43,'combat','Combats entre l’armée congolaise et le M23 au Sud-Kivu','ACLED'],[40,'accord','Réunion du comité de suivi de l’accord de paix','GDELT'],[36,'diplo','Projets économiques régionaux évoqués lors d’un sommet','GDELT']]});
+R('ARE','SDN',-5.2,-.3,'Khartoum accuse Abou Dhabi d’armer les Forces de soutien rapide ; relations rompues en mai 2025.');
+R('ERI','ETH',-4.7,-.4,'Risque de guerre : l’Éthiopie revendique un accès à la mer Rouge, mobilisations à la frontière.',{shock:[39,-.5]});
+R('EGY','ETH',-3.3,-.2,'Différend sur le Grand barrage de la Renaissance, inauguré en 2025.');
+R('DZA','MAR',-5.4,-.2,'Relations rompues depuis 2021 ; rivalité sur le Sahara occidental.');
+R('DZA','MLI',-5,-.3,'Crise depuis la destruction d’un drone malien par l’Algérie en avril 2025 ; ambassadeurs rappelés.');
+R('FRA','MLI',-5.2,0,'Rupture depuis le coup d’État : départ des forces françaises, médias français suspendus.');
+R('BFA','FRA',-4.8,0,'Rupture depuis le coup d’État : départ des forces françaises, coopération suspendue.');
+R('FRA','NER',-5,0,'Rupture depuis le coup d’État de 2023 : départ des forces françaises, contentieux sur l’uranium.');
+R('DZA','FRA',-3.4,.5,'Crise diplomatique en 2024-2025 (Sahara occidental, expulsions de diplomates), signes de dégel.');
+R('FRA','MAR',6.4,.2,'Relance du partenariat depuis la reconnaissance par Paris du plan d’autonomie marocain (2024).');
+R('DEU','FRA',8.9,0,'Moteur de l’intégration européenne, coopération de défense étroite.',{treaty:'Traité d’Aix-la-Chapelle (2019), UE, OTAN'});
+R('FRA','GBR',7.6,.2,'Deux puissances nucléaires européennes, coordination renforcée sur l’Ukraine.',{treaty:'Accords de Lancaster House (2010), OTAN'});
+R('FRA','GRC',7.8,0,'Clause d’assistance mutuelle, achats de frégates et de Rafale.',{treaty:'Partenariat stratégique de défense (2021)'});
+R('ARE','FRA',6.8,0,'Base militaire française à Abou Dhabi, partenariat énergétique et armement.');
+R('FRA','UKR',7.4,.1,'Soutien militaire et financier, garanties de sécurité en discussion.',{treaty:'Accord bilatéral de sécurité (2024)'});
+R('DJI','FRA',6.2,0,'Principale base militaire française à l’étranger.');
+R('CHN','FRA',-.9,-.4,'Différends commerciaux (véhicules électriques, cognac) malgré un dialogue stratégique.');
+R('AZE','FRA',-4.1,.3,'Paris accuse Bakou d’ingérence en Nouvelle-Calédonie ; soutien français à l’Arménie.');
+R('ARM','FRA',5.6,.3,'Coopération de défense depuis 2023 : radars, blindés.');
+R('MLI','RUS',6,0,'Présence de l’Africa Corps russe, coopération sécuritaire et minière.');
+R('BFA','RUS',5.6,0,'Instructeurs russes, coopération sécuritaire.');
+R('NER','RUS',5.2,0,'Instructeurs russes, accords militaires depuis 2024.');
+R('CAF','RUS',6.4,0,'Présence russe historique (ex-Wagner) : protection du pouvoir contre accès minier.');
+R('BFA','MLI',8.4,0,'Confédération des États du Sahel : défense commune, sortie de la CEDEAO.',{treaty:'Confédération de l’AES (2024)'});
+R('MLI','NER',8.2,0,'Confédération des États du Sahel : défense commune, sortie de la CEDEAO.',{treaty:'Confédération de l’AES (2024)'});
+R('BFA','NER',8.4,0,'Confédération des États du Sahel : défense commune, sortie de la CEDEAO.',{treaty:'Confédération de l’AES (2024)'});
+R('DEU','UKR',7.6,.1,'Deuxième soutien militaire de l’Ukraine après les États-Unis.');
+R('GBR','UKR',7.8,0,'Soutien militaire de premier plan, formation des troupes ukrainiennes.',{treaty:'Partenariat de cent ans (2025)'});
+R('POL','UKR',5.6,-.4,'Soutien militaire massif, mais différends sur les céréales et la mémoire historique.');
+R('HUN','UKR',-2.9,-.3,'Budapest freine l’aide européenne et les négociations d’adhésion de l’Ukraine.');
+R('UKR','USA',4.5,.3,'Aide militaire conditionnée, accord sur les minerais (2025), pression pour un cessez-le-feu.',{p:[3,3,6.6]});
+R('BLR','UKR',-6.2,0,'Le Bélarus a servi de base à l’invasion de 2022.');
+R('AUS','CHN',1.1,.4,'Stabilisation après la levée des sanctions commerciales chinoises en 2024.');
+R('CHN','VNM',2.3,0,'Partenariat politique et commercial malgré les différends en mer de Chine.');
+R('CHN','KHM',7,0,'Allié régional de Pékin ; base navale de Ream modernisée par la Chine.');
+R('USA','VNM',4,0,'Partenariat stratégique global depuis 2023.');
+R('RUS','SRB',4.4,0,'Proximité historique, dépendance gazière, refus des sanctions.');
+R('EGY','SAU',6,0,'Soutien financier saoudien, coordination régionale.');
+R('ARE','SAU',5.4,-.3,'Alliés, mais divergences au Yémen et au Soudan.');
+R('QAT','USA',7.2,0,'Base d’Al-Udeid ; le Qatar est un allié majeur hors OTAN.');
+R('IRN','IRQ',4.6,0,'Influence iranienne via les milices, dépendance électrique irakienne.');
+R('RUS','TUR',1.7,0,'Relation pragmatique : énergie, tourisme, médiation, rivalités en Syrie et dans le Caucase.');
+R('TUR','USA',3.3,.2,'Alliés de l’OTAN aux intérêts souvent divergents.');
+R('ARG','BRA',-1.6,0,'Frictions politiques entre Buenos Aires et Brasília, commerce dense au sein du Mercosur.');
+R('COL','USA',.3,-.9,'Frictions sur la lutte antidrogue : décertification, sanctions visant le président colombien.');
+R('JPN','PHL',6.2,.2,'Accord d’accès réciproque (2024), coopération maritime face à la Chine.');
+R('IND','JPN',6,0,'Partenariat stratégique, Quad, infrastructures.');
+R('AUS','IND',5.6,0,'Partenariat stratégique, Quad.');
+R('BDI','RWA',-4.5,-.1,'Frontière fermée, accusations mutuelles de soutien à des rebelles.');
+R('KAZ','RUS',5,0,'OTSC, Union économique eurasiatique, dépendance logistique.');
+R('CHN','KAZ',5.2,.1,'Nouvelles routes de la soie, premier partenaire commercial.');
+R('RUS','ZAF',3.6,0,'BRICS, neutralité sud-africaine sur l’Ukraine.');
+R('CHN','ZAF',5.2,0,'Premier partenaire commercial, BRICS.');
+R('CHN','DEU',1.6,-.3,'Premier partenaire commercial, mais « réduction des risques » et surcapacités chinoises.');
+R('ARG','GBR',-1.6,0,'Différend sur les Malouines, relation commerciale normale.');
+R('AZE','IRN',-2,0,'Méfiance sur la route de transit du Zanguezour et les liens israélo-azerbaïdjanais.');
+R('RUS','VEN',4.6,0,'Coopération militaire et pétrolière.');
+R('NIC','USA',-4.2,0,'Sanctions américaines contre le régime Ortega-Murillo.');
+R('CHN','KOR',1,.2,'Premier partenaire commercial, désaccords sur la défense antimissile.');
+R('CHN','SGP',4.8,0,'Partenaire commercial majeur, Singapour ménage Pékin et Washington.');
+R('SGP','USA',5.6,0,'Accès naval américain, partenariat de défense.');
+R('BHR','USA',7,0,'Siège de la 5e flotte américaine, accord de sécurité de 2023.',{treaty:'Accord global d’intégration sécuritaire (2023)'});
+R('BHR','IRN',-3,0,'Accusations d’ingérence iranienne, normalisation hésitante.');
+}
+
+const BYC = new Map();
+const PAIRS = new Map();
+for (const d of PLIST) {
+  if (!C[d.a] || !C[d.b]) continue;
+  // Piliers par défaut, puis recalage pour que la moyenne pondérée retombe exactement sur la note.
+  let p = d.p ? d.p.slice() : [d.s, d.s * .6, d.s * 1.1];
+  const w = .35 * p[0] + .25 * p[1] + .4 * p[2];
+  d.p = p.map(v => clamp(v + (d.s - w), -10, 10));
+  const r = rng(hash(d.a + d.b));
+  d.series = [];
+  for (let t = 0; t < NW; t++) {
+    let v = d.s - d.tr * (1 - t / (NW - 1));
+    if (d.shock && t < d.shock[0] - W0) v -= d.shock[1];
+    if (t < NW - 1) v += (r() - .5) * .45;
+    d.series.push(clamp(v, -10, 10));
+  }
+  d.ev = (d.ev || []).map(e => ({w:e[0] - W0, type:e[1], text:e[2], src:e[3], day:hash(e[2]) % (e[0] - W0 === NW - 1 ? 3 : 5)}));
+  PAIRS.set(key(d.a, d.b), d);
+  for (const x of [d.a, d.b]) { if (!BYC.has(x)) BYC.set(x, []); BYC.get(x).push(d); }
+}
+
+/* ---------- Relations estimées par le modèle (sans événement documenté) ---------- */
+const GEN = new Map();
+function shared(a, b){ const out = []; for (const o of C[a].orgs) if (C[b].orgs.has(o)) out.push(o); return out; }
+function gen(a, b){
+  const k = key(a, b); if (GEN.has(k)) return GEN.get(k);
+  const A = C[a], B = C[b], al = A.wa * B.wa, sh = shared(a, b);
+  const bonus = sh.reduce((s, o) => s + (ORG_BONUS[o] || 0), 0);
+  const sanc = (SANCT_SRC.has(a) && SANCT_TGT.has(b)) || (SANCT_SRC.has(b) && SANCT_TGT.has(a)) || SANCT_PAIRS.has(k);
+  const treaty = TREATY[k] || null;
+  let dip = .6 + 3.2 * al + bonus + (treaty ? 2 : 0);
+  let sec = treaty || sh.includes('OTAN') ? 9 : sh.includes('AES') ? 8 : sh.includes('OTSC') ? 7 : sh.includes('CCG') ? 5 : al * 3;
+  const tr = rawTrade(a, b) * (sanc ? .15 : 1);
+  let eco = Math.log10(tr + 1) * 2.4 - 1;
+  if (sanc) { dip -= 3; eco -= 3.5; sec -= 2; }
+  const p = [clamp(dip, -10, 10), clamp(eco, -3, 7), clamp(sec, -10, 10)];
+  const raw = .35 * p[0] + .25 * p[1] + .4 * p[2];
+  const g = {s:clamp(raw, -3.9, 8.6), raw, p, sh, sanc, treaty, vote:clamp(Math.round(62 + 30 * al), 18, 97)};
+  GEN.set(k, g); return g;
+}
+function sc(a, b, t){ const d = PAIRS.get(key(a, b)); return d ? d.series[t] : gen(a, b).s; }
+function pillarsAt(a, b, t){
+  const d = PAIRS.get(key(a, b));
+  if (!d) return gen(a, b).p;
+  if (d.live) return d.live[t].p;
+  const sh = d.series[t] - d.s;
+  return d.p.map(v => v + sh);
+}
+function tradeVal(a, b){
+  const s = sc(a, b, NW - 1), k = lvl(s);
+  const g = gen(a, b);
+  let m = k === -3 ? .03 : k === -2 ? .3 : k === -1 ? .8 : 1;
+  if (g.sanc && !PAIRS.has(key(a, b))) m = Math.min(m, .15);
+  if (key(a, b) === 'RUS|UKR') m = 0;
+  return rawTrade(a, b) * m;
+}
+
+/* =====================================================================
+   Données réelles (GDELT) : notes calculées à partir des mesures de la semaine.
+   Diplomatie = ton médiatique et échelle de Goldstein des événements bilatéraux ;
+   économie et sécurité = modèle structurel, la sécurité étant abaissée par les recours
+   caractérisés à la force (combats, frappes, occupation). Sous DOC_MIN événements, modèle seul.
+   ===================================================================== */
+const CAMEO = {'01':'Déclaration publique', '02':'Appel', '03':'Intention de coopérer', '04':'Consultation', '05':'Coopération diplomatique', '06':'Coopération matérielle', '07':'Aide', '08':'Concession', '09':'Enquête', '10':'Exigence', '11':'Désapprobation', '12':'Rejet', '13':'Menace', '14':'Protestation', '15':'Démonstration de force', '16':'Réduction des relations', '17':'Coercition', '18':'Agression', '19':'Recours à la force', '20':'Violence de masse'};
+const CAMEO_FORCE = {'192':'Occupation de territoire', '193':'Combats à l’arme légère', '194':'Combats à l’artillerie et aux blindés', '195':'Frappes aériennes', '196':'Violation de cessez-le-feu'};
+function liveScore(a, b, st){
+  const g = gen(a, b);
+  if (!st || st[0] < DOC_MIN) return {s:g.s, raw:g.raw, p:g.p, doc:false, st};
+  const E = clamp(1.3 * st[1] + 1.3 * st[2] + 3, -10, 10);
+  const m = Math.min(1, st[7] / 60) * Math.min(1, st[8] / .06);
+  const sec = clamp(g.p[2] - 10 * m, -10, 10), eco = g.p[1];
+  const raw = .35 * E + .25 * eco + .4 * sec;
+  let s = raw, floor = null;
+  if (E < 0 && m >= .6) { s = Math.min(s, -7.5 - 2.5 * (m - .6)); floor = 'conflit'; }
+  else if (E < 0 && m >= .3) { s = Math.min(s, -4.5); floor = 'hostilite'; }
+  return {s:clamp(s, -10, 10), raw, p:[E, eco, sec], doc:true, m, floor, st};
+}
+if (LIVE) {
+  for (const lp of LIVE.pairs) {
+    if (!C[lp.a] || !C[lp.b] || PAIRS.has(key(lp.a, lp.b))) continue;
+    const live = lp.st.map(st => liveScore(lp.a, lp.b, st));
+    const d = {a:lp.a, b:lp.b, live, series:live.map(r => r.s), treaty:TREATY[key(lp.a, lp.b)] || null,
+      ev:lp.ev.map(e => ({w:e[0], arts:e[1], url:e[2], date:e[3], root:e[4], code:e[5], a1:e[6], a2:e[7]}))};
+    d.s = d.series[NW - 1]; d.p = live[NW - 1].p;
+    PLIST.push(d); PAIRS.set(key(d.a, d.b), d);
+    for (const x of [d.a, d.b]) { if (!BYC.has(x)) BYC.set(x, []); BYC.get(x).push(d); }
+  }
+}
+
+/* ---------- Commerce : premiers partenaires et grands corridors ---------- */
+const TRADE_TOP = new Map();
+const CORRIDORS = [];
+(function(){
+  const tot = {};
+  ISOS.forEach(a => { tot[a] = []; });
+  for (let i = 0; i < ISOS.length; i++) for (let j = i + 1; j < ISOS.length; j++) {
+    const a = ISOS[i], b = ISOS[j], v = tradeVal(a, b);
+    tot[a].push({b, v}); tot[b].push({b:a, v});
+    CORRIDORS.push({a, b, v});
+  }
+  ISOS.forEach(a => {
+    const arr = tot[a].sort((x, y) => y.v - x.v); const sum = arr.reduce((s, x) => s + x.v, 0) || 1;
+    TRADE_TOP.set(a, arr.slice(0, 8).map(x => ({b:x.b, v:x.v, share:x.v / sum})));
+  });
+  CORRIDORS.sort((x, y) => y.v - x.v); CORRIDORS.length = 18;
+})();
+
+/* =====================================================================
+   Points chauds (type ACLED) : [lon, lat], victimes estimées sur 4 semaines, événements / semaine
+   ===================================================================== */
+const HOT = LIVE ? [] : [
+  {id:'ukraine', n:'Front ukrainien', iso:'UKR', ll:[37.6,48.2], kind:'Guerre interétatique', act:'Russie · Ukraine', f:3200, e:1450, tr:.05},
+  {id:'gaza', n:'Gaza', iso:'PSE', ll:[34.4,31.4], kind:'Conflit armé, cessez-le-feu fragile', act:'Israël · Hamas', f:210, e:95, tr:-.3},
+  {id:'darfour', n:'Darfour', iso:'SDN', ll:[25.3,13.6], kind:'Guerre civile', act:'Armée soudanaise · Forces de soutien rapide', f:1300, e:160, tr:.1},
+  {id:'kordofan', n:'Kordofan', iso:'SDN', ll:[30.2,12.2], kind:'Guerre civile', act:'Armée soudanaise · Forces de soutien rapide', f:650, e:90, tr:.35},
+  {id:'kivu', n:'Kivu', iso:'COD', ll:[28.9,-1.7], kind:'Rébellion soutenue de l’extérieur', act:'Armée congolaise · M23/AFC · milices', f:520, e:140, tr:-.1},
+  {id:'birmanie', n:'Birmanie', iso:'MMR', ll:[95.9,21.9], kind:'Guerre civile', act:'Junte · armées ethniques · résistance', f:780, e:310, tr:0},
+  {id:'burkina', n:'Burkina Faso', iso:'BFA', ll:[-1,13.2], kind:'Insurrection jihadiste', act:'JNIM · État islamique · armée', f:900, e:120, tr:.2},
+  {id:'mali', n:'Centre et ouest du Mali', iso:'MLI', ll:[-5,14.3], kind:'Insurrection jihadiste', act:'JNIM · armée malienne · Africa Corps', f:520, e:85, tr:.25},
+  {id:'nigeria', n:'Nord-est du Nigeria', iso:'NGA', ll:[13.2,11.8], kind:'Insurrection jihadiste', act:'Boko Haram · ISWAP · armée', f:430, e:75, tr:.1},
+  {id:'somalie', n:'Somalie', iso:'SOM', ll:[45.3,2.8], kind:'Insurrection jihadiste', act:'Al-Shabaab · armée · Union africaine', f:380, e:70, tr:0},
+  {id:'haiti', n:'Haïti', iso:'HTI', ll:[-72.3,18.6], kind:'Violence des gangs', act:'Coalitions de gangs · police · force internationale', f:420, e:85, tr:-.1},
+  {id:'liban', n:'Sud-Liban', iso:'LBN', ll:[35.45,33.25], kind:'Frappes transfrontalières', act:'Israël · Hezbollah', f:60, e:45, tr:.2},
+  {id:'yemen', n:'Yémen et mer Rouge', iso:'YEM', ll:[43.6,15.3], kind:'Conflit armé régionalisé', act:'Houthis · Israël · États-Unis', f:140, e:55, tr:0},
+  {id:'pakistan', n:'Nord-ouest du Pakistan', iso:'PAK', ll:[69.5,31.5], kind:'Insurrection', act:'TTP · séparatistes baloutches · armée', f:600, e:150, tr:.3},
+  {id:'afpak', n:'Frontière afghano-pakistanaise', iso:'AFG', ll:[70.9,34.3], kind:'Affrontements entre États', act:'Armée pakistanaise · talibans afghans', f:140, e:40, tr:.6},
+  {id:'mexique', n:'Sinaloa et Michoacán', iso:'MEX', ll:[-104.5,23.5], kind:'Violence criminelle organisée', act:'Cartels · forces de sécurité', f:1100, e:260, tr:0, crim:true},
+  {id:'catatumbo', n:'Catatumbo', iso:'COL', ll:[-73,8.6], kind:'Conflit armé interne', act:'ELN · dissidents des FARC', f:120, e:40, tr:.1},
+  {id:'amhara', n:'Amhara', iso:'ETH', ll:[37.9,11.6], kind:'Insurrection', act:'Milices Fano · armée fédérale', f:350, e:70, tr:0},
+  {id:'cabo', n:'Cabo Delgado', iso:'MOZ', ll:[40.3,-12.3], kind:'Insurrection jihadiste', act:'Groupe affilié à l’État islamique · forces rwandaises', f:60, e:18, tr:-.1},
+  {id:'cachemire', n:'Ligne de contrôle (Cachemire)', iso:'IND', ll:[74.3,34.2], kind:'Tensions armées entre États', act:'Inde · Pakistan', f:12, e:9, tr:0},
+  {id:'thaicam', n:'Frontière Thaïlande–Cambodge', iso:'THA', ll:[103.5,14.4], kind:'Tensions armées entre États', act:'Thaïlande · Cambodge', f:4, e:6, tr:-.4},
+  {id:'syrie', n:'Sud de la Syrie', iso:'SYR', ll:[36.6,32.7], kind:'Violences communautaires et frappes', act:'Milices locales · forces gouvernementales · Israël', f:90, e:35, tr:-.1},
+  {id:'soudansud', n:'Soudan du Sud', iso:'SSD', ll:[31.5,8], kind:'Violences armées', act:'Armée · opposition armée · milices', f:180, e:30, tr:.2}
+];
+if (LIVE) {
+  for (const g of LIVE.geo) {
+    const f = FEATS.find(f => d3.geoContains(f, g.ll));
+    const iso = f ? (TERR[f.id] || f.id) : null;
+    if (!iso || !C[iso]) continue;
+    HOT.push({id:'z' + g.k, n:g.name.split(', ')[0], full:g.name, iso, ll:g.ll, kind:'Violence armée signalée', act:'voir les articles', wk:g.wk.slice(), live:true,
+      ev:g.ev.map(e => ({arts:e[0], url:e[1], date:e[2], code:e[3], root:String(e[3]).slice(0, 2), a1:e[4], a2:e[5]}))});
+  }
+}
+// Seuils sur 4 semaines : victimes estimées (exemple) ou événements armés signalés (GDELT).
+const HOT_T = LIVE ? [400, 160, 60, 20] : [1000, 300, 100, 25];
+HOT.forEach(h => {
+  if (!h.wk) {
+    const r = rng(hash(h.id)), base = h.f / 4;
+    h.wk = []; for (let t = 0; t < NW; t++) h.wk.push(Math.max(1, base * (1 - h.tr * (1 - t / (NW - 1))) * (t === NW - 1 ? 1 : .85 + r() * .3)));
+  }
+  h.f4 = h.wk.map((v, t) => { let s = 0, n = 0; for (let i = Math.max(0, t - 3); i <= t; i++) { s += h.wk[i]; n++; } return s * 4 / n; });
+  h.score = h.f4.map(f => { if (!f) return 0; const s = f >= HOT_T[0] ? -9.2 : f >= HOT_T[1] ? -8.2 : f >= HOT_T[2] ? -7.3 : f >= HOT_T[3] ? -5.6 : -3.6; return h.crim ? Math.max(s, -6) : s; });
+});
+function hotLine(h, t){ return LIVE ? `${nf0.format(h.wk[t])} événements armés signalés cette semaine` : `≈ ${nf0.format(h.f4[t])} victimes en 4 semaines · ${nf0.format(h.wk[t])} / sem.`; }
+const HOT_UNIT = LIVE ? 'événements armés signalés, semaine' : 'victimes estimées, 4 sem.';
+const hotVal = (h, t) => LIVE ? nf0.format(h.wk[t]) : '≈ ' + nf0.format(h.f4[t]);
+
+/* =====================================================================
+   Bases et présences militaires hors du territoire national (exploitant, hôte)
+   ===================================================================== */
+const BASES = [
+ ['USA','DEU','Ramstein',49.44,7.6,'Base aérienne'],['USA','ITA','Aviano',46.03,12.6,'Base aérienne'],['USA','ITA','Sigonella',37.4,14.92,'Base aéronavale'],['USA','ESP','Rota',36.64,-6.35,'Base navale'],['USA','GBR','Lakenheath',52.41,.56,'Base aérienne'],['USA','POL','Redzikowo',54.48,17.1,'Défense antimissile'],['USA','ROU','Mihail Kogălniceanu',44.36,28.49,'Base aérienne'],['USA','GRC','Souda',35.53,24.15,'Base navale'],['USA','TUR','Incirlik',37,35.43,'Base aérienne'],['USA','QAT','Al-Udeid',25.12,51.31,'Base aérienne, QG régional'],['USA','BHR','Manama',26.21,50.61,'QG de la 5e flotte'],['USA','KWT','Camp Arifjan',28.88,48.16,'Base terrestre'],['USA','ARE','Al-Dhafra',24.25,54.55,'Base aérienne'],['USA','JOR','Muwaffaq Salti',31.83,36.78,'Base aérienne'],['USA','IRQ','Erbil',36.24,43.96,'Présence résiduelle'],['USA','DJI','Camp Lemonnier',11.55,43.15,'Base interarmées'],['USA','JPN','Yokosuka',35.29,139.67,'Base navale de la 7e flotte'],['USA','JPN','Kadena (Okinawa)',26.35,127.77,'Base aérienne'],['USA','KOR','Camp Humphreys',36.96,127.03,'Base terrestre'],['USA','PHL','Sites d’accès EDCA',15.18,120.56,'Accès par rotation'],['USA','AUS','Darwin',-12.42,130.87,'Rotation des Marines'],['USA','MUS','Diego Garcia',-7.31,72.41,'Base aéronavale sous bail britannique'],['USA','DNK','Pituffik (Groenland)',76.53,-68.7,'Base spatiale'],['USA','CUB','Guantánamo',19.9,-75.1,'Base navale'],['USA','HND','Soto Cano',14.38,-87.62,'Base aérienne'],
+ ['FRA','DJI','Djibouti',11.59,43.13,'Base interarmées'],['FRA','ARE','Abou Dhabi',24.52,54.37,'Base interarmées'],['FRA','GAB','Libreville',.4,9.45,'Camp partagé avec le Gabon'],['FRA','EST','Tapa (OTAN)',59.26,25.96,'Présence avancée de l’OTAN'],['FRA','ROU','Cincu (OTAN)',45.87,24.75,'Brigade multinationale'],
+ ['GBR','CYP','Akrotiri',34.59,32.99,'Base aérienne souveraine'],['GBR','BHR','Juffair',26.19,50.62,'Base navale'],['GBR','OMN','Duqm',19.67,57.7,'Base logistique navale'],['GBR','KEN','Nanyuki',.02,37.07,'Unité d’entraînement'],['GBR','BRN','Seria',4.61,114.33,'Garnison'],['GBR','EST','Tapa (OTAN)',59.29,26.06,'Présence avancée de l’OTAN'],
+ ['RUS','SYR','Hmeimim',35.4,35.95,'Base aérienne, statut incertain'],['RUS','SYR','Tartous',34.89,35.87,'Base navale, statut incertain'],['RUS','ARM','Gyumri',40.79,43.84,'102e base militaire'],['RUS','TJK','Douchanbé',38.56,68.77,'201e base militaire'],['RUS','KGZ','Kant',42.85,74.85,'Base aérienne de l’OTSC'],['RUS','MDA','Transnistrie',46.84,29.63,'Contingent militaire'],['RUS','GEO','Abkhazie',43.1,40.62,'Base en territoire occupé'],['RUS','GEO','Ossétie du Sud',42.23,43.97,'Base en territoire occupé'],['RUS','BLR','Bélarus',53.13,26.02,'Armes nucléaires tactiques'],['RUS','MLI','Bamako',12.65,-8,'Africa Corps'],['RUS','BFA','Ouagadougou',12.37,-1.52,'Africa Corps'],['RUS','NER','Niamey',13.48,2.18,'Africa Corps'],['RUS','CAF','Bangui',4.39,18.56,'Instructeurs et sécurité'],['RUS','LBY','Al-Joufra',29.2,16,'Base aérienne'],
+ ['CHN','DJI','Djibouti',11.59,43.06,'Base de soutien naval'],['CHN','KHM','Ream',10.51,103.61,'Base navale modernisée par la Chine'],
+ ['TUR','QAT','Tariq ibn Ziyad',25.27,51.45,'Base terrestre'],['TUR','SOM','Mogadiscio',2.02,45.3,'Centre d’entraînement'],['TUR','NCY','Chypre du Nord',35.2,33.35,'Contingent militaire'],['TUR','IRQ','Bashiqa',36.45,43.35,'Base avancée'],['TUR','SYR','Nord de la Syrie',36.55,37.1,'Positions militaires'],['TUR','LBY','Al-Watiya',32.48,11.9,'Base aérienne'],
+ ['IND','MUS','Agaléga',-10.43,56.65,'Piste et jetée'],['JPN','DJI','Djibouti',11.54,43.14,'Base de soutien'],['DEU','LTU','Rūdninkai',54.4,25.1,'45e brigade blindée'],['ARE','SOL','Berbera',10.39,44.94,'Base aéronavale'],['ARE','SOM','Bosaso',11.28,49.15,'Base aérienne']
+].map(b => ({op:b[0], host:b[1], n:b[2], ll:[b[4], b[3]], kind:b[5]}));
+const hostName = h => C[h] ? C[h].name : nm(h);
+
+/* =====================================================================
+   Agrégats : situation de chaque pays, tendance, indice mondial
+   ===================================================================== */
+const CLIM = new Map();
+function climate(t){
+  if (CLIM.has(t)) return CLIM.get(t);
+  // Vue d’ensemble : seules les relations documentées et les conflits internes colorent un pays.
+  const m = new Map(); ISOS.forEach(a => m.set(a, {s:0, by:null, hot:null}));
+  for (const d of PAIRS.values()) {
+    const s = d.series[t];
+    if (s < m.get(d.a).s) m.set(d.a, {s, by:d.b, hot:null});
+    if (s < m.get(d.b).s) m.set(d.b, {s, by:d.a, hot:null});
+  }
+  // Avec les données GDELT, seule une violence intense colore le pays : le signal géographique reste bruité.
+  for (const h of HOT) { const c = m.get(h.iso); if (c && h.score[t] < c.s && (!LIVE || h.score[t] <= -8.2)) m.set(h.iso, {s:h.score[t], by:null, hot:h.id}); }
+  CLIM.set(t, m); return m;
+}
+function trendOf(a, t){
+  let best = {d:0, by:null};
+  const t4 = Math.max(0, t - 4);
+  for (const d of BYC.get(a) || []) { const dv = d.series[t] - d.series[t4]; if (Math.abs(dv) > Math.abs(best.d)) best = {d:dv, by:d.a === a ? d.b : d.a}; }
+  return best;
+}
+const IDX = (function(){
+  const raw = d3.range(NW).map(t => PLIST.reduce((s, d) => s + Math.max(0, -(d.series ? d.series[t] : 0)), 0) + HOT.reduce((s, h) => s + h.f4[t], 0) / 900);
+  return raw.map(v => Math.round(v / raw[NW - 1] * 61));
+})();
+
+/* =====================================================================
+   État de l’interface
+   ===================================================================== */
+const state = {week:NW - 1, mode:'sit', sel:null, pair:null, hot:null, layers:{links:true, conflicts:true, trade:false, bases:false}, hl:null};
+
+/* ---------- Carte ---------- */
+const mapwrap = $('#mapwrap');
+const svg = d3.select('#map');
+const fx = $('#fx'), ctx = fx.getContext('2d');
+const RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const pats = svg.selectAll('pattern.dp');
+const root = svg.append('g');
+const sphere = root.append('path').attr('class', 'sphere');
+const grat = root.append('path').attr('class', 'grat');
+const gLand = root.append('g');
+const gMicro = root.append('g');
+const gTrade = root.append('g').attr('class', 'trade');
+const gArcs = root.append('g');
+const gBases = root.append('g');
+const gHot = root.append('g');
+const mapTop = d3.select('#mapTop'), topRoot = mapTop.append('g');
+const gLbl = topRoot.append('g');
+const tip = $('#tip');
+let W = 800, H = 500, K = 1, ZT = d3.zoomIdentity, DPR = 1, proj, gpath, booted = false, flowDelay = 0;
+const FIT = {type:'FeatureCollection', features:FEATS};
+
+const land = gLand.selectAll('path').data(FEATS).join('path')
+  .attr('class', d => 'c' + (NONSTATE[d.id] ? ' na' : ''))
+  .on('pointermove', (e, d) => showTip(e, tipCountry(d.id)))
+  .on('pointerleave', hideTip)
+  .on('click', (e, d) => onCountry(d.id));
+const micro = gMicro.selectAll('circle').data(Object.keys(MICRO)).join('circle')
+  .attr('class', 'micro').attr('r', 3.4)
+  .on('pointermove', (e, d) => showTip(e, tipCountry(d)))
+  .on('pointerleave', hideTip)
+  .on('click', (e, d) => onCountry(d));
+
+/* La trame garde la même taille à l’écran quel que soit le zoom. */
+const zoom = d3.zoom().scaleExtent([1, 9])
+  .on('zoom', e => { ZT = e.transform; K = ZT.k; root.attr('transform', ZT); topRoot.attr('transform', ZT); svg.style('--k', K); pats.attr('patternTransform', `scale(${1 / K})`); rescale(); });
+const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+if (coarse) zoom.filter(e => e.type === 'wheel' || !e.touches || e.touches.length > 1);
+svg.call(zoom).on('dblclick.zoom', null);
+if (coarse) svg.style('touch-action', 'pan-y');
+$('#zIn').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.6);
+$('#zOut').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1 / 1.6);
+$('#zReset').onclick = () => svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+
+function layout(){
+  const r = mapwrap.getBoundingClientRect();
+  W = Math.max(300, r.width); H = Math.max(260, r.height);
+  svg.attr('viewBox', `0 0 ${W} ${H}`); mapTop.attr('viewBox', `0 0 ${W} ${H}`);
+  const padT = W < 640 ? 70 : 108, padB = W < 640 ? 66 : 104;
+  proj = d3.geoEqualEarth().rotate([-11, 0]).fitExtent([[12, padT], [W - 12, H - padB]], FIT);
+  gpath = d3.geoPath(proj);
+  sphere.attr('d', gpath({type:'Sphere'}));
+  grat.attr('d', gpath(d3.geoGraticule10()));
+  land.attr('d', gpath);
+  micro.attr('cx', d => proj(MICRO[d])[0]).attr('cy', d => proj(MICRO[d])[1]);
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  fx.width = Math.round(W * DPR); fx.height = Math.round(H * DPR);
+  zoom.extent([[0, 0], [W, H]]).translateExtent([[-W * .2, -H * .2], [W * 1.2, H * 1.2]]);
+  svg.call(zoom.transform, d3.zoomIdentity);
+  drawOverlays();
+  paint();
+}
+const XY = iso => proj(C[iso] ? C[iso].anchor : [0, 0]);
+function arcD(p0, p1){
+  const [x0, y0] = p0, [x1, y1] = p1, dx = x1 - x0, dy = y1 - y0, d = Math.hypot(dx, dy) || 1;
+  const off = Math.min(d * .2, 90);
+  let nx = -dy / d, ny = dx / d; if (ny > 0) { nx = -nx; ny = -ny; }
+  return `M${x0},${y0}Q${(x0 + x1) / 2 + nx * off},${(y0 + y1) / 2 + ny * off} ${x1},${y1}`;
+}
+function linkD(a, b){
+  const p0 = XY(a), p1 = XY(b);
+  const span = proj([168, 0])[0] - proj([-168, 0])[0];
+  if (Math.abs(p1[0] - p0[0]) > span * .45) return gpath({type:'LineString', coordinates:[C[a].anchor, C[b].anchor]});
+  return arcD(p0, p1);
+}
+const stateOf = id => TERR[id] || id;
+
+function levelFor(id){
+  const iso = stateOf(id), t = state.week;
+  if (NONSTATE[id] || !C[iso]) return null;
+  if (state.sel && !state.hot) {
+    if (iso === state.sel) return 'self';
+    return state.mode === 'evo' ? evoLvl(sc(state.sel, iso, t) - sc(state.sel, iso, Math.max(0, t - 4))) : lvl(sc(state.sel, iso, t));
+  }
+  return state.mode === 'evo' ? evoLvl(trendOf(iso, t).d) : lvl(climate(t).get(iso).s);
+}
+/* Trame de points pour les pays, couleur pleine pour les micro-États. */
+function fillFor(id){ const k = levelFor(id); return k === null ? null : k === 'self' ? 'var(--sel)' : `url(#d${k})`; }
+function colorFor(id){ const k = levelFor(id); return k === null ? null : k === 'self' ? 'var(--sel)' : `var(--s${k})`; }
+/* Avec une origine, la nouvelle trame se propage en onde depuis le pays choisi. */
+function paint(origin){
+  const ripple = !!(origin && booted && !RM);
+  land.classed('self', d => !!state.sel && !state.hot && stateOf(d.id) === state.sel)
+    .classed('other', d => !!state.pair && stateOf(d.id) === state.pair)
+    .classed('dim', d => state.hl !== null && levelFor(d.id) !== state.hl);
+  land.interrupt('fill');
+  if (ripple) {
+    land.transition('fill').delay(d => d.cen ? Math.round(d3.geoDistance(origin, d.cen) / Math.PI * 1000) : 0).duration(380).ease(d3.easeCubicOut)
+      .on('start', function(d){ this.style.fill = fillFor(d.id) || ''; })
+      .styleTween('opacity', () => t => String(.25 + .75 * t))
+      .on('end', function(){ this.style.opacity = ''; })
+      .on('interrupt', function(d){ this.style.opacity = ''; this.style.fill = fillFor(d.id) || ''; });
+  } else {
+    land.style('opacity', null).style('fill', d => fillFor(d.id));
+  }
+  micro.style('fill', d => colorFor(d)).classed('dim', d => state.hl !== null && levelFor(d) !== state.hl);
+}
+
+function drawOverlays(){
+  const t = state.week, L = state.layers, F = clamp(W / 1000, .6, 1), ego = !!state.sel && !state.hot;
+  /* Liens */
+  let arcs = [];
+  if (L.links) {
+    if (ego) {
+      const a = state.sel;
+      const rels = ISOS.filter(b => b !== a).map(b => ({a, b, s:sc(a, b, t)}));
+      const neg = rels.filter(r => r.s <= -1.5).sort((x, y) => x.s - y.s).slice(0, 6);
+      const pos = rels.filter(r => r.s >= 4).sort((x, y) => y.s - x.s).slice(0, 6);
+      arcs = neg.concat(pos);
+      if (state.pair && !arcs.some(r => r.b === state.pair)) arcs.push({a, b:state.pair, s:sc(a, state.pair, t)});
+    } else {
+      arcs = PLIST.filter(d => PAIRS.has(key(d.a, d.b))).map(d => ({a:d.a, b:d.b, s:d.series[t]})).filter(r => lvl(r.s) <= -2 || lvl(r.s) === 3);
+      if (LIVE) arcs = arcs.sort((x, y) => Math.abs(y.s) - Math.abs(x.s)).slice(0, 60);
+    }
+  }
+  const focus = state.pair ? key(state.sel, state.pair) : null;
+  const ag = gArcs.selectAll('g.ag').data(arcs, d => key(d.a, d.b)).join(enter => {
+    const g = enter.append('g').attr('class', 'ag');
+    g.append('path').attr('class', booted && !RM ? 'arc draw' : 'arc').attr('pathLength', 1)
+      .style('animation-delay', (d, i) => (ego ? 250 + i * 60 : i * 15) + 'ms');
+    g.append('path').attr('class', 'arc-hit')
+      .on('pointermove', (e, d) => showTip(e, `<b>${esc(C[d.a].name)} ↔ ${esc(C[d.b].name)}</b><br>${LV(lvl(d.s)).name} · <span class="num">${sgn(d.s)}</span><span class="m">Cliquer pour comprendre ce score</span>`))
+      .on('pointerleave', hideTip)
+      .on('click', (e, d) => { e.stopPropagation(); openPair(state.sel && (d.a === state.sel || d.b === state.sel) ? state.sel : d.a, state.sel && d.a === state.sel ? d.b : state.sel && d.b === state.sel ? d.a : d.b); });
+    return g;
+  });
+  ag.select('.arc').attr('d', d => linkD(d.a, d.b))
+    .style('stroke', d => LCOL(lvl(d.s)))
+    .style('--w', d => ((focus && key(d.a, d.b) === focus) ? 2.4 : .8 + Math.max(0, Math.abs(d.s) - 3) / 3.2) * Math.max(F, .75))
+    .classed('fade', d => !!focus && key(d.a, d.b) !== focus)
+    .classed('focus', d => !!focus && key(d.a, d.b) === focus);
+  ag.select('.arc-hit').attr('d', d => linkD(d.a, d.b));
+
+  /* Commerce */
+  let flows = [];
+  if (L.trade) {
+    if (ego) flows = (TRADE_TOP.get(state.sel) || []).slice(0, 8).map(x => ({a:state.sel, b:x.b, v:x.v}));
+    else flows = CORRIDORS;
+  }
+  const maxV = d3.max(flows, d => d.v) || 1;
+  const tg = gTrade.selectAll('g.tg').data(flows, d => key(d.a, d.b)).join(enter => {
+    const g = enter.append('g').attr('class', 'tg');
+    g.append('path').attr('class', 'flow');
+    g.append('path').attr('class', 'arc-hit')
+      .on('pointermove', (e, d) => showTip(e, `<b>${esc(C[d.a].name)} ↔ ${esc(C[d.b].name)}</b><br>Commerce estimé ≈ <span class="num">${nf0.format(d.v)}</span> Md$ par an<span class="m">Modèle de gravité · illustratif</span>`))
+      .on('pointerleave', hideTip)
+      .on('click', (e, d) => { e.stopPropagation(); openPair(d.a, d.b); });
+    return g;
+  });
+  tg.select('.flow').attr('d', d => linkD(d.a, d.b)).style('--w', d => (1 + 3 * Math.sqrt(d.v / maxV)) * Math.max(F, .75));
+  tg.select('.arc-hit').attr('d', d => linkD(d.a, d.b));
+
+  /* Bases */
+  let bases = [];
+  if (L.bases) bases = ego ? BASES.filter(b => b.op === state.sel || b.host === state.sel) : BASES;
+  const bg = gBases.selectAll('g.base').data(bases, d => d.op + d.n).join(enter => {
+    const g = enter.append('g').attr('class', 'base');
+    g.append('path').attr('d', 'M0,-4.5L4.5,0L0,4.5L-4.5,0Z');
+    g.on('pointermove', (e, d) => showTip(e, `<b>${esc(d.n)}</b><br>${esc(d.kind)}<span class="m">${esc(C[d.op].name)} → ${esc(hostName(d.host))}</span>`))
+      .on('pointerleave', hideTip)
+      .on('click', (e, d) => { e.stopPropagation(); C[d.host] && d.host !== d.op ? openPair(d.op, d.host) : select(d.op); });
+    return g;
+  });
+  bg.classed('own', d => !!state.sel && d.op === state.sel).each(function(d){ const p = proj(d.ll); d.x = p[0]; d.y = p[1]; });
+
+  /* Points chauds : bulle proportionnelle aux victimes, anneau pointillé pour les plus meurtriers */
+  const hots = L.conflicts ? HOT.filter(h => h.f4[t] > 0) : [];
+  const rad = h => (2.5 + Math.sqrt(h.f4[t]) / (LIVE ? 2.6 : 4.4)) * F;
+  const hg = gHot.selectAll('g.hot').data(hots, d => d.id).join(enter => {
+    const g = enter.append('g').attr('class', 'hot');
+    g.append('circle').attr('class', 'iso');
+    g.append('circle').attr('class', 'bub');
+    g.append('circle').attr('class', 'core');
+    g.append('circle').attr('class', 'hit');
+    g.on('pointermove', (e, d) => showTip(e, `<b>${esc(d.n)}</b> · ${esc(C[d.iso].name)}<br>${esc(d.kind)}<span class="m">${hotLine(d, state.week)}</span>`))
+      .on('pointerleave', hideTip)
+      .on('click', (e, d) => { e.stopPropagation(); openHot(d.id); });
+    return g;
+  });
+  hg.classed('on', d => state.hot === d.id).style('opacity', ego ? .45 : 1)
+    .each(function(d){
+      const p = proj(d.ll), r = rad(d), g = d3.select(this);
+      d.x = p[0]; d.y = p[1];
+      g.select('.iso').attr('r', r * 1.75).style('display', d.f4[t] >= 300 ? null : 'none');
+      g.select('.bub').attr('r', r);
+      g.select('.core').attr('r', Math.max(1.4, 1.8 * F));
+      g.select('.hit').attr('r', r + 5);
+    });
+
+  /* Étiquettes */
+  let labels = [];
+  if (ego) {
+    labels.push({id:'s', text:C[state.sel].name, iso:state.sel, cls:'sel', p:XY(state.sel)});
+    if (state.pair) labels.push({id:'p', text:C[state.pair].name, iso:state.pair, cls:'', p:XY(state.pair)});
+    arcs.forEach(r => { if (r.b !== state.pair) labels.push({id:r.b, text:C[r.b].name, cls:'', p:XY(r.b)}); });
+  } else if (L.conflicts) {
+    hots.slice().sort((a, b) => b.f4[t] - a.f4[t]).slice(0, 8).forEach(h => { const p = proj(h.ll); labels.push({id:h.id, text:h.n, cls:'hl', p:[p[0] + rad(h) + 5, p[1] + 3], left:true}); });
+  }
+  const boxes = []; labels = labels.filter(l => {
+    const w = l.text.length * (l.cls === 'sel' ? 8.4 : 6), h = 13;
+    const x = l.left ? l.p[0] : l.p[0] - w / 2, y = l.p[1] - (l.left ? 10 : 18);
+    const b = [x - 2, y - 2, x + w + 2, y + h + 2];
+    if (x < 0 || x + w > W) return false;
+    if (boxes.some(o => !(b[2] < o[0] || b[0] > o[2] || b[3] < o[1] || b[1] > o[3]))) return false;
+    boxes.push(b); return true;
+  });
+  const lg = gLbl.selectAll('g.lg').data(labels, d => d.id + d.cls).join(enter => { const g = enter.append('g').attr('class', 'lg').style('animation-delay', (ego && booted ? 500 : 0) + 'ms'); g.append('text'); return g; });
+  lg.each(function(d){ d.x = d.p[0]; d.y = d.left ? d.p[1] : d.p[1] - 10; });
+  lg.select('text').attr('class', d => 'lbl ' + d.cls).attr('text-anchor', d => d.left ? 'start' : 'middle').text(d => d.text);
+  rescale();
+  buildFlows(ag, tg, maxV, focus);
+}
+function rescale(){
+  const s = 1 / K;
+  gBases.selectAll('g.base').attr('transform', d => `translate(${d.x},${d.y}) scale(${s})`);
+  gHot.selectAll('g.hot').attr('transform', d => `translate(${d.x},${d.y}) scale(${s})`);
+  gLbl.selectAll('g.lg').attr('transform', d => `translate(${d.x},${d.y}) scale(${s})`);
+  micro.attr('r', 3.4 * s);
+}
+
+/* ---------- Points mobiles ----------
+   Un point plein, lent, glisse sur chaque relation tracée : il indique qu’elle est active.
+   Dans les deux sens pour les relations d’hostilité et d’alliance, un seul sens sinon.
+   Le commerce est un chapelet de points sur une ligne pointillée. */
+const PSPEC = {'-3':{sp:26, f:1, b:1}, '-2':{sp:21, f:1, b:1}, '-1':{sp:16, f:1, b:0}, '0':{sp:14, f:1, b:0}, '1':{sp:14, f:1, b:0}, '2':{sp:16, f:1, b:1}, '3':{sp:16, f:1, b:1}};
+const PC = {};
+function resolveColors(){
+  const cs = getComputedStyle(document.documentElement);
+  for (let k = -3; k <= 3; k++) PC[k] = cs.getPropertyValue('--s' + k).trim();
+  PC.trade = cs.getPropertyValue('--ink-2').trim(); PC.edge = cs.getPropertyValue('--paper').trim();
+}
+resolveColors();
+function sample(el){
+  let L = 0; try { L = el.getTotalLength(); } catch (e) { return null; }
+  if (!L) return null;
+  const n = Math.max(12, Math.min(180, Math.round(L / 5))), pts = new Float32Array((n + 1) * 2), gaps = new Uint8Array(n);
+  for (let i = 0; i <= n; i++) { const p = el.getPointAtLength(L * i / n); pts[2 * i] = p.x; pts[2 * i + 1] = p.y; }
+  for (let i = 0; i < n; i++) if (Math.hypot(pts[2 * i + 2] - pts[2 * i], pts[2 * i + 3] - pts[2 * i + 1]) > Math.max(30, 4 * L / n)) gaps[i] = 1;
+  return {pts, gaps, n, L};
+}
+let FLOWS = [];
+function buildFlows(ag, tg, maxV, focus){
+  if (RM) { FLOWS = []; return; }
+  const out = [], r = rng(hash('p' + state.week + (state.sel || '') + (state.pair || ''))), now = performance.now();
+  let i = 0;
+  ag.select('.arc').each(function(d){
+    const s = sample(this); if (!s) return;
+    const k = lvl(d.s), sp = PSPEC[k], ps = [];
+    const isF = focus && key(d.a, d.b) === focus, dim = focus && !isF;
+    for (let j = 0; j < sp.f; j++) ps.push({u:r(), dir:1});
+    for (let j = 0; j < sp.b; j++) ps.push({u:r(), dir:-1});
+    out.push(Object.assign(s, {col:PC[k], speed:sp.sp, r:isF ? 2.4 : 1.9, alpha:dim ? .15 : 1, ps, t0:now + flowDelay + i++ * 40}));
+  });
+  tg.select('.flow').each(function(d){
+    const s = sample(this); if (!s) return;
+    const n = 2 + Math.round(3 * Math.sqrt(d.v / maxV)), ps = [];
+    for (let j = 0; j < n; j++) ps.push({u:(j + r() * .5) / n, dir:1});
+    out.push(Object.assign(s, {col:PC.trade, speed:18, r:1.6, alpha:.9, ps, t0:now + flowDelay}));
+  });
+  FLOWS = out; flowDelay = 0;
+}
+let lastT = 0;
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt = lastT ? Math.min(.05, (now - lastT) / 1000) : 0; lastT = now;
+  ctx.clearRect(0, 0, fx.width, fx.height);
+  const k = ZT.k * DPR, tx = ZT.x * DPR, ty = ZT.y * DPR;
+  ctx.lineWidth = 1.4 * DPR; ctx.strokeStyle = PC.edge;
+  for (const f of FLOWS) {
+    if (now < f.t0) continue;
+    const rr = f.r * DPR; ctx.fillStyle = f.col;
+    for (const p of f.ps) {
+      p.u += p.dir * f.speed * dt / f.L;
+      if (p.u > 1) p.u -= 1; else if (p.u < 0) p.u += 1;
+      const fi = p.u * f.n, i = Math.min(f.n - 1, fi | 0), q = fi - i;
+      if (f.gaps[i]) continue;
+      const x = f.pts[2 * i] + (f.pts[2 * i + 2] - f.pts[2 * i]) * q, y = f.pts[2 * i + 1] + (f.pts[2 * i + 3] - f.pts[2 * i + 1]) * q;
+      ctx.globalAlpha = f.alpha * Math.min(1, p.u / .1, (1 - p.u) / .1);
+      ctx.beginPath(); ctx.arc(x * k + tx, y * k + ty, rr, 0, 6.2832); ctx.stroke(); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- Infobulle ---------- */
+function showTip(e, html){
+  if (e.pointerType === 'touch') return;
+  tip.innerHTML = html; tip.hidden = false;
+  const r = mapwrap.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+  if (x + tw > r.width - 8) x = e.clientX - r.left - tw - 14;
+  if (y + th > r.height - 8) y = e.clientY - r.top - th - 14;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+}
+function hideTip(){ tip.hidden = true; }
+function tipCountry(id){
+  if (NONSTATE[id]) return `<b>${esc(nm(id))}</b><br>${esc(NONSTATE[id])}`;
+  const iso = stateOf(id), t = state.week, t4 = Math.max(0, t - 4);
+  if (!C[iso]) return esc(id);
+  const head = TERR[id] ? `${esc(nm(id))} (${esc(C[iso].name)})` : esc(C[iso].name);
+  if (state.sel && !state.hot) {
+    if (iso === state.sel) return `<b>${head}</b><br>Pays sélectionné<span class="m">Cliquer pour revenir à la vue d’ensemble</span>`;
+    const s = sc(state.sel, iso, t), dv = s - sc(state.sel, iso, t4);
+    return `<b>${head}</b><br>${LV(lvl(s)).name} avec ${esc(the(state.sel))} · <span class="num">${sgn(s)}</span><span class="m">${delta(dv)} en 4 sem. · cliquer pour le détail</span>`;
+  }
+  if (state.mode === 'evo') {
+    const tr = trendOf(iso, t);
+    return tr.by ? `<b>${head}</b><br>Plus forte variation : ${esc(C[tr.by].name)} <span class="num">${sgn(tr.d)}</span><span class="m">sur 4 semaines</span>` : `<b>${head}</b><br>Aucune relation documentée en mouvement`;
+  }
+  const c = climate(t).get(iso);
+  const why = c.hot ? `Conflit armé : ${esc(HOT.find(h => h.id === c.hot).n)}` : c.by ? `Relation la plus tendue : ${esc(C[c.by].name)} <span class="num">(${sgn(c.s)})</span>` : 'Aucune tension documentée cette semaine';
+  return `<b>${head}</b><br>${c.by || c.hot ? LV(lvl(c.s)).name : 'Calme'}<span class="m">${why}</span>`;
+}
+
+/* ---------- Légende et bandeau de vue ---------- */
+function renderLegend(){
+  const evo = state.mode === 'evo';
+  const items = evo ? EVO.map(e => ({k:e.k, name:e.name, col:e.col})) : LEVELS.map(l => ({k:l.k, name:l.name, short:l.short, col:LCOL(l.k), desc:l.desc}));
+  const narrow = W < 640;
+  const t = evo ? 'Variation de la note sur 4 semaines' : (state.sel ? 'Relation avec ' + the(state.sel) : 'Relation documentée la plus tendue de chaque pays');
+  const sw = c => `background:radial-gradient(circle at 2px 2px, ${c} 1.25px, transparent 1.55px) 0 0/4px 4px, color-mix(in srgb, ${c} 16%, transparent)`;
+  $('#legend').innerHTML = `<div class="legend-t"><span>${esc(t)}</span><span class="num">${evo ? '−1,5 · −0,5 · +0,5 · +1,5' : '−10 ← note → +10'}</span></div>
+    <div class="scale">${items.map(i => `<button type="button" data-hl="${i.k}" title="${esc(i.desc || i.name)}"><i style="${sw(i.col)}"></i><span>${esc(narrow && i.short ? i.short : i.name)}</span></button>`).join('')}</div>
+    <div class="legend-x"><span><svg width="22" height="10" aria-hidden="true"><path d="M1 8Q11 0 21 8" fill="none" style="stroke:var(--ink-2)" stroke-width="1.2"/><circle cx="11" cy="4" r="2.2" style="fill:var(--ink-2);stroke:var(--paper)" stroke-width="1"/></svg>Relation suivie</span>${state.layers.trade ? `<span><svg width="22" height="10" aria-hidden="true"><path d="M1 8Q11 0 21 8" fill="none" style="stroke:var(--ink-2)" stroke-width="1.2" stroke-dasharray="2 3"/></svg>Flux commercial</span>` : ''}<span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" style="fill:var(--s-3);stroke:var(--s-3)" fill-opacity=".2" stroke-width="1"/><circle cx="7" cy="7" r="1.6" style="fill:var(--s-3)"/></svg>${LIVE ? 'Violence armée (taille = événements signalés)' : 'Conflit armé (taille = victimes)'}</span><span><svg width="12" height="12" aria-hidden="true"><path d="M6 1.5L10.5 6L6 10.5L1.5 6Z" fill="none" style="stroke:var(--ink-2)" stroke-width="1.2"/></svg>Base militaire</span></div>`;
+  $('#legend').querySelectorAll('[data-hl]').forEach(b => {
+    const on = () => { state.hl = +b.dataset.hl; paint(); }, off = () => { state.hl = null; paint(); };
+    b.addEventListener('pointerenter', on); b.addEventListener('pointerleave', off);
+    b.addEventListener('focus', on); b.addEventListener('blur', off);
+  });
+}
+function renderCap(){
+  const wk = 'S' + wkn(state.week);
+  let eb, h, p, hint;
+  if (state.hot) { const x = HOT.find(h => h.id === state.hot); eb = 'Conflit armé · ' + wk; h = `<em>${esc(x.n)}</em>`; p = x.kind + ' · ' + x.act; hint = 'Échap pour revenir à la vue d’ensemble.'; }
+  else if (state.sel) {
+    const n = `<em>${esc(the(state.sel))}</em>`;
+    eb = 'Point de vue · ' + wk;
+    h = state.mode === 'evo' ? 'Ce qui change pour ' + n : 'Le monde vu depuis ' + n;
+    p = state.mode === 'evo' ? 'Couleur : variation de chaque relation sur 4 semaines.' : 'Couleur : relation de chaque pays avec ' + the(state.sel) + '.';
+    hint = state.pair ? 'Cliquez un autre pays pour changer de relation.' : 'Cliquez un autre pays pour comprendre la relation.';
+  } else {
+    eb = 'Vue d’ensemble · ' + wk;
+    h = state.mode === 'evo' ? 'Ce qui <em>bouge</em> en quatre semaines' : 'Où le monde est-il <em>sous tension</em>&#8239;?';
+    p = state.mode === 'evo' ? 'Couleur : plus forte variation d’une relation du pays en 4 semaines.' : 'Couleur : relation documentée la plus tendue de chaque pays, ou conflit armé sur son sol.';
+    hint = 'Cliquez un pays pour voir le monde de son point de vue.';
+  }
+  $('#cap').innerHTML = `<div class="eyebrow">${esc(eb)}</div><h1>${h}</h1><p>${esc(p)}</p><p class="hint">${esc(hint)}</p>`;
+}
+
+/* ---------- Frise ---------- */
+function renderFrise(){
+  const mx = Math.max(...IDX);
+  $('#weeks').innerHTML = IDX.map((v, i) => `<button type="button" class="wk" data-w="${i}" aria-pressed="${i === state.week}" aria-label="Semaine ${wkn(i)}, ${weekDates(i)}, indice ${v}" title="S${wkn(i)} · ${weekDates(i)} · indice ${v}"><span class="b"><i style="height:${(v / mx * 100).toFixed(0)}%"></i></span><span class="l">S${wkn(i)}</span></button>`).join('');
+  $('#fwk').textContent = 'Semaine ' + wkn(state.week) + (state.week < NW - 1 ? ' · archive' : LIVE && LIVE.weeks[state.week].days < 7 ? ' · en cours' : '');
+  $('#fdate').textContent = weekDates(state.week);
+  const d = state.week > 0 ? IDX[state.week] - IDX[state.week - 1] : 0;
+  $('#fidx').textContent = IDX[state.week] + (d ? (d > 0 ? ' ▲' : ' ▼') + Math.abs(d) : ' =');
+}
+$('#weeks').addEventListener('click', e => { const b = e.target.closest('.wk'); if (b) setWeek(+b.dataset.w); });
+$('#weeks').addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setWeek(clamp(state.week + (e.key === 'ArrowRight' ? 1 : -1), 0, NW - 1)); $('#weeks').querySelector(`[data-w="${state.week}"]`).focus(); }
+});
+let playing = null;
+$('#play').onclick = () => {
+  if (playing) { clearInterval(playing); playing = null; return; }
+  let i = 0; setWeek(0);
+  playing = setInterval(() => { i++; if (i >= NW) { clearInterval(playing); playing = null; return; } setWeek(i); }, 750);
+};
+function setWeek(i){ state.week = i; render(); }
+
+/* =====================================================================
+   Panneau de lecture
+   ===================================================================== */
+function spark(series, t, w = 62, h = 18){
+  const vals = series.slice(0, t + 1);
+  const lo = Math.min(...vals) - .4, hi = Math.max(...vals) + .4;
+  const x = i => 2 + i / SPAN * (w - 4), y = v => h - 2 - (v - lo) / (hi - lo || 1) * (h - 4);
+  const pts = vals.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}"/><circle cx="${x(t).toFixed(1)}" cy="${y(vals[t]).toFixed(1)}" r="3" style="fill:${LCOL(lvl(vals[t]))}"/></svg>`;
+}
+function seriesOf(a, b){ const d = PAIRS.get(key(a, b)); return d ? d.series : Array(NW).fill(gen(a, b).s); }
+function relRow(a, b, opts = {}){
+  const t = state.week, t4 = Math.max(0, t - 4), ser = seriesOf(a, b), s = ser[t], dv = s - ser[t4];
+  const left = opts.both ? `${esc(C[a].name)}<span class="sep"> ↔ </span>${esc(C[b].name)}` : esc(C[b].name);
+  const l = opts.change && lvl(ser[t4]) !== lvl(s) ? `${pill(lvl(ser[t4]), 'ghost')}<span>→</span>${pill(lvl(s))}` : pill(lvl(s));
+  return `<button type="button" class="row" data-pair="${a}-${b}"><span class="rn">${left}</span><span class="rd num">${delta(dv)}</span><span class="rl">${l}</span><span class="rs"><span class="sc num">${sgn(s)}</span>${spark(ser, t)}</span></button>`;
+}
+function head(crumbLabel, crumbAttr){ return `<button type="button" class="crumb" ${crumbAttr}><span aria-hidden="true">←</span> ${esc(crumbLabel)}</button>`; }
+
+function renderGlobal(){
+  const t = state.week, t4 = Math.max(0, t - 4);
+  const docs = PLIST.filter(d => d.series);
+  const movers = docs.map(d => ({d, dv:d.series[t] - d.series[t4]})).filter(m => Math.abs(m.dv) >= .5).sort((a, b) => Math.abs(b.dv) - Math.abs(a.dv)).slice(0, 6);
+  const nDeg = docs.filter(d => d.series[t] - d.series[t4] <= -.5).length;
+  const nImp = docs.filter(d => d.series[t] - d.series[t4] >= .5).length;
+  const nConf = HOT.filter(h => h.score[t] <= -7).length;
+  const nDocConf = docs.filter(d => lvl(d.series[t]) === -3).length;
+  const changes = t > 0 ? docs.filter(d => lvl(d.series[t]) !== lvl(d.series[t - 1])) : [];
+  const hots = HOT.filter(h => h.f4[t] > 0).sort((a, b) => b.f4[t] - a.f4[t]).slice(0, 7);
+  const maxF = hots.length ? hots[0].f4[t] : 1;
+  const wkL = LIVE ? LIVE.weeks[t] : null;
+  const top = movers[0];
+  const r = rng(hash('ing' + t));
+  const lead = top ? ` La plus forte variation concerne ${C[top.d.a].name} et ${C[top.d.b].name} (${sgn(top.dv)}).` : '';
+  return `<div class="pi">
+    <header class="ph">
+      <div class="eyebrow">Bulletin · semaine ${wkn(t)} · ${esc(weekDates(t))}</div>
+      <h2 class="pname">L’état du monde cette semaine</h2>
+      <p class="lede">${LIVE ? `${nConf} zones de violence armée ressortent de la presse cette semaine, et ${pl(nDocConf, 'relation entre États est', 'relations entre États sont')} au niveau « Conflit armé ».` : `${nConf} foyers de conflit armé sont actifs.`}${NW < 2 ? ' L’historique démarre : les tendances apparaîtront la semaine prochaine.' : ` Sur quatre semaines, ${pl(nDeg, 'relation se dégrade', 'relations se dégradent')} et ${pl(nImp, 's’améliore', 's’améliorent')}.`}${esc(lead)}</p>
+    </header>
+    <ol class="howto">
+      <li>La couleur d’un pays montre <b>sa relation la plus tendue</b> cette semaine, ou un conflit armé sur son sol.</li>
+      <li>Les lignes relient les pays <b>en conflit</b> (rouge) ou <b>alliés</b> (bleu).</li>
+      <li><b>Cliquez un pays</b> : la carte se recolore selon ses relations avec tous les autres.</li>
+    </ol>
+    <div class="stats">
+      <div class="stat"><b>${nConf}</b><span>${LIVE ? 'zones de violence armée' : 'foyers de conflit armé'}</span></div>
+      ${NW < 2 && LIVE ? `<div class="stat"><b>${nf0.format(docs.filter(d => d.live[t].doc).length)}</b><span>relations documentées</span></div>
+      <div class="stat"><b>${nDocConf}</b><span>relations en conflit armé</span></div>` : `<div class="stat"><b>${nDeg}</b><span>relations en dégradation</span></div>
+      <div class="stat"><b>${nImp}</b><span>relations en amélioration</span></div>`}
+    </div>
+    <section class="sec"><h3>Ce qui a bougé <small>4 semaines</small></h3>
+      <div class="rows">${movers.map(m => relRow(m.d.a, m.d.b, {both:true, change:true})).join('') || `<p class="note">${NW < 2 ? 'L’historique se construit : les variations apparaîtront dès la deuxième semaine de données.' : 'Aucune variation notable.'}</p>`}</div>
+    </section>
+    ${changes.length ? `<section class="sec"><h3>Changements de niveau <small>vs semaine ${wkn(t - 1)}</small></h3><div class="rows">${changes.map(d => relRow(d.a, d.b, {both:true, change:true})).join('')}</div></section>` : ''}
+    <section class="sec"><h3>Points chauds <small>${HOT_UNIT}</small></h3>
+      <div class="rows">${hots.map(h => { const d = h.f4[t] - h.f4[t4]; return `<button type="button" class="hrow" data-hot="${h.id}"><span class="hn">${esc(h.n)}</span><span class="hv num">${hotVal(h, t)}</span><span class="hk">${esc(C[h.iso].name)} · ${esc(h.kind)}</span><span class="hv num">${!h.f4[t4] || t === t4 ? '—' : Math.abs(d) / h.f4[t4] < .08 ? '= stable' : (d > 0 ? '▲ ' : '▼ ') + nf0.format(Math.abs(d / h.f4[t4]) * 100) + ' %'}</span><span class="hbar"><i style="width:${(h.f4[t] / maxF * 100).toFixed(1)}%"></i></span></button>`; }).join('')}</div>
+    </section>
+    <section class="sec"><h3>Explorer depuis un pays</h3>
+      <div class="picks">${['FRA','USA','CHN','RUS','IND','BRA','TUR','ZAF','IRN','UKR'].map(i => `<button type="button" data-iso="${i}">${esc(C[i].name)}</button>`).join('')}</div>
+    </section>
+    ${LIVE ? `<div class="ingest">Données GDELT jusqu’au <b>${esc(wkL.last ? fmtD.format(new Date(wkL.last + 'T00:00:00Z')) : '—')}</b> · ${wkL.days} jour${wkL.days > 1 ? 's' : ''} sur 7<br>${nf0.format(wkL.events)} événements retenus · ${nf0.format(docs.filter(d => d.live[t].doc).length)} relations documentées<br>${changes.length} ${changes.length > 1 ? 'relations changent' : 'relation change'} de niveau · mise à jour chaque matin</div>`
+      : `<div class="ingest">Ingestion du <b>21 oct. 2026, 06:00 UTC</b><br>${nf0.format(16800 + Math.floor(r() * 3800))} articles codés (GDELT) · ${nf0.format(HOT.reduce((s, h) => s + h.wk[t], 0))} événements armés (ACLED, S${wkn(t - 1)})<br>${changes.length} ${changes.length > 1 ? 'relations changent' : 'relation change'} de niveau · prochain bulletin le lundi 26 oct.</div>`}
+  </div>`;
+}
+
+function renderCountry(a){
+  const t = state.week, c = C[a];
+  const rels = ISOS.filter(b => b !== a).map(b => ({b, s:sc(a, b, t)}));
+  const counts = LEVELS.map(L => rels.filter(r => lvl(r.s) === L.k).length);
+  const worst = rels.filter(r => r.s < 1.5).sort((x, y) => x.s - y.s).slice(0, 5);
+  const best = rels.filter(r => r.s >= 1.5).sort((x, y) => y.s - x.s).slice(0, 5);
+  const clim = climate(t).get(a);
+  const own = BASES.filter(x => x.op === a), hosted = BASES.filter(x => x.host === a);
+  const hots = HOT.filter(h => h.iso === a && h.f4[t] > 0);
+  const tt = TRADE_TOP.get(a).slice(0, 6), tmax = tt[0] ? tt[0].share : 1;
+  const nHard = counts[0] + counts[1], nTens = counts[2], nPos = counts[5] + counts[6];
+  const orgs = [...c.orgs];
+  const docN = (BYC.get(a) || []).length;
+  const kpi = (label, val, src) => `<div class="kpi"><span>${label}</span><b>${val}</b><small>${src}</small></div>`;
+  return `<div class="pi">
+    ${head('Vue d’ensemble', 'data-home')}
+    <header class="ph">
+      <div class="eyebrow">Fiche pays · semaine ${wkn(t)}</div>
+      <h2 class="pname">${esc(c.name)}</h2>
+      ${orgs.length ? `<div class="orgs">${orgs.map(o => `<span class="tag">${ORG_LABEL[o]}</span>`).join('')}</div>` : ''}
+      <p class="lede">Sur les ${rels.length} pays suivis, ${esc(the(a))} ${ART_P.has(a) ? 'comptent' : 'compte'} ${pl(nHard, 'relation de conflit ou d’hostilité', 'relations de conflit ou d’hostilité')}, ${pl(nTens, 'relation tendue', 'relations tendues')} et ${pl(nPos, 'partenariat ou alliance', 'partenariats ou alliances')}.${clim.hot ? ' Le pays est lui-même touché par un conflit armé : ' + esc(HOT.find(h => h.id === clim.hot).n) + '.' : ''}</p>
+    </header>
+    <section class="sec"><h3>Profil relationnel <small>${rels.length} pays</small></h3>
+      <div class="profile">${LEVELS.map((L, i) => counts[i] ? `<button type="button" data-hl="${L.k}" style="flex:${counts[i]};background:${LCOL(L.k)}" title="${L.name} : ${counts[i]} pays" aria-label="${L.name} : ${counts[i]} pays"></button>` : '').join('')}</div>
+      <div class="profile-k">${LEVELS.map((L, i) => `<span><b>${counts[i]}</b>${L.short}</span>`).join('')}</div>
+      <p class="note">${docN} relations documentées par des événements ; les autres sont estimées par le modèle.</p>
+    </section>
+    ${worst.length ? `<section class="sec"><h3>Relations les plus tendues</h3><div class="rows">${worst.map(r => relRow(a, r.b)).join('')}</div></section>` : ''}
+    ${best.length ? `<section class="sec"><h3>Partenaires les plus proches</h3><div class="rows">${best.map(r => relRow(a, r.b)).join('')}</div></section>` : ''}
+    <section class="sec"><h3>Indicateurs clés <small>${c.has ? 'ordres de grandeur' : 'non saisis'}</small></h3>
+      ${c.has ? `<div class="kpis">
+        ${kpi('PIB', nf0.format(c.gdp) + ' Md$', 'FMI · 2025')}
+        ${kpi('Population', (c.pop < 10 ? nf1.format(c.pop) : nf0.format(c.pop)) + ' M', 'ONU · 2025')}
+        ${kpi('Effort de défense', c.mil ? nf1.format(c.mil) + ' % du PIB' : 'n. d.', 'SIPRI · 2025')}
+        ${kpi('Arme nucléaire', c.nuke === 1 ? 'Oui' : c.nuke === 2 ? 'Non déclarée' : 'Non', 'SIPRI Yearbook')}
+        ${kpi('Bases à l’étranger', own.length, 'IISS · veille OSINT')}
+        ${kpi('Présences étrangères', hosted.length, 'IISS · veille OSINT')}
+      </div>` : '<p class="note">Ce pays n’a pas d’indicateurs saisis dans la maquette ; ses relations sont estimées par le modèle.</p>'}
+    </section>
+    <section class="sec"><h3>Premiers partenaires commerciaux <small>estimation</small></h3>
+      <div class="tbars">${tt.map(x => `<button type="button" class="tb" data-pair="${a}-${x.b}"><span>${esc(C[x.b].name)}</span><span class="tr"><i style="width:${(x.share / tmax * 100).toFixed(1)}%"></i></span><span class="num">${nf0.format(x.share * 100)} %</span></button>`).join('')}</div>
+      <p class="note">Part du commerce bilatéral modélisé. En production : UN Comtrade.</p>
+      <div><button type="button" class="linkbtn" data-layer-on="trade">Voir les flux sur la carte</button></div>
+    </section>
+    ${own.length || hosted.length ? `<section class="sec"><h3>Présence militaire</h3>
+      ${own.length ? `<ul class="plist">${own.map(b => `<li><span class="d own"></span><span>${esc(hostName(b.host))} · ${esc(b.n)} <em>${esc(b.kind)}</em></span></li>`).join('')}</ul>` : ''}
+      ${hosted.length ? `<ul class="plist">${hosted.map(b => `<li><span class="d"></span><span>${esc(C[b.op].name)} · ${esc(b.n)} <em>${esc(b.kind)}</em></span></li>`).join('')}</ul>` : ''}
+      <div><button type="button" class="linkbtn" data-layer-on="bases">Afficher sur la carte</button></div>
+    </section>` : ''}
+    ${hots.length ? `<section class="sec"><h3>${LIVE ? 'Violences armées signalées' : 'Conflits sur son territoire'}</h3><div class="rows">${hots.map(h => `<button type="button" class="hrow" data-hot="${h.id}"><span class="hn">${esc(h.n)}</span><span class="hv num">${hotVal(h, t)}</span><span class="hk">${esc(h.kind)}</span><span class="hv">${LIVE ? 'événements / sem.' : 'victimes / 4 sem.'}</span></button>`).join('')}</div></section>` : ''}
+  </div>`;
+}
+
+function chart(series, t){
+  const Wc = 360, Hc = 160, m = {l:4, r:34, t:8, b:20};
+  const vals = series.slice(0, t + 1);
+  let lo = Math.max(-10, Math.min(...series) - 2.2), hi = Math.min(10, Math.max(...series) + 2.2);
+  const x = i => m.l + i / SPAN * (Wc - m.l - m.r), y = v => m.t + (hi - v) / (hi - lo) * (Hc - m.t - m.b);
+  const TH = [-10, -7, -4, -1.5, 1.5, 4, 7, 10];
+  let bands = '';
+  for (let k = -3; k <= 3; k++) {
+    const b0 = Math.max(lo, TH[k + 3]), b1 = Math.min(hi, TH[k + 4]);
+    if (b1 <= b0) continue;
+    const y0 = y(b1), y1 = y(b0);
+    bands += `<rect x="${m.l}" y="${y0.toFixed(1)}" width="${Wc - m.l - m.r}" height="${(y1 - y0).toFixed(1)}" style="fill:${LCOL(k)}" fill-opacity=".22"/>`;
+    if (y1 - y0 > 13) bands += `<text class="band-l" x="${Wc - m.r + 4}" y="${((y0 + y1) / 2 + 3).toFixed(1)}">${LV(k).short}</text>`;
+  }
+  const pts = vals.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  const ticks = [...new Set([0, Math.round(SPAN / 3), Math.round(2 * SPAN / 3), NW - 1])].filter(i => i < NW).map(i => `<text class="ax" x="${x(i).toFixed(1)}" y="${Hc - 5}" text-anchor="middle">S${wkn(i)}</text>`).join('');
+  return `<svg class="pchart" viewBox="0 0 ${Wc} ${Hc}" data-lo="${lo}" data-hi="${hi}" role="img" aria-label="Évolution de la note sur ${NW} semaine${NW > 1 ? 's' : ''}">${bands}${ticks}
+    <polyline class="ln" points="${pts}"/><circle cx="${x(t).toFixed(1)}" cy="${y(vals[t]).toFixed(1)}" r="4.5" style="fill:${LCOL(lvl(vals[t]))};stroke:var(--panel);stroke-width:2"/>
+    <g class="hov" style="display:none"><line class="guide" y1="${m.t}" y2="${Hc - m.b}"/><circle r="3.5" style="fill:var(--ink)"/><text class="gl" text-anchor="middle"></text></g>
+    <rect class="hit" x="${m.l}" y="${m.t}" width="${Wc - m.l - m.r}" height="${Hc - m.t - m.b}" fill="transparent"/></svg>`;
+}
+function wireChart(svgEl, series){
+  const Wc = 360, m = {l:4, r:34, t:8, b:20}, Hc = 160;
+  const lo = +svgEl.dataset.lo, hi = +svgEl.dataset.hi;
+  const x = i => m.l + i / SPAN * (Wc - m.l - m.r), y = v => m.t + (hi - v) / (hi - lo) * (Hc - m.t - m.b);
+  const g = svgEl.querySelector('.hov'), hit = svgEl.querySelector('.hit');
+  const move = e => {
+    const r = svgEl.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * Wc;
+    const i = clamp(Math.round((px - m.l) / (Wc - m.l - m.r) * SPAN), 0, state.week);
+    const v = series[i];
+    g.style.display = '';
+    g.querySelector('line').setAttribute('x1', x(i)); g.querySelector('line').setAttribute('x2', x(i));
+    const c = g.querySelector('circle'); c.setAttribute('cx', x(i)); c.setAttribute('cy', y(v));
+    const tx = g.querySelector('text'); tx.setAttribute('x', clamp(x(i), 40, Wc - m.r - 40)); tx.setAttribute('y', Math.max(14, y(v) - 9)); tx.textContent = `S${wkn(i)} · ${sgn(v)}`;
+  };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerleave', () => { g.style.display = 'none'; });
+}
+
+const EVT = {frappe:'Frappe', combat:'Affrontement', incident:'Incident', sanction:'Sanctions', diplo:'Diplomatie', accord:'Accord', exercice:'Exercice militaire', commerce:'Commerce', declar:'Déclaration'};
+const SRC = {ACLED:['ACLED','https://acleddata.com'], GDELT:['GDELT','https://www.gdeltproject.org'], UCDP:['UCDP','https://ucdp.uu.se'], OPENSANCTIONS:['OpenSanctions','https://www.opensanctions.org'], COMTRADE:['UN Comtrade','https://comtradeplus.un.org'], SIPRI:['SIPRI','https://www.sipri.org/databases'], AGNU:['Votes AGNU','https://digitallibrary.un.org']};
+const srcLink = k => `<a href="${SRC[k][1]}" target="_blank" rel="noopener">${SRC[k][0]} ↗</a>`;
+
+function liveSummary(r){
+  if (!r.doc) return `Pas assez d’événements cette semaine (${r.st ? r.st[0] : 'moins de 5'}) pour une mesure fiable : la relation est estimée par le modèle structurel (alliances, sanctions, commerce).`;
+  const st = r.st, coop = Math.round((st[3] + st[4]) * 100), conf = Math.round((st[5] + st[6]) * 100);
+  let txt = `${nf0.format(st[0])} événements codés cette semaine. Ton médiatique moyen ${sgn(st[2])}, échelle de Goldstein ${sgn(st[1])} : ${coop} % d’actes de coopération, ${conf} % d’actes de conflit.`;
+  if (st[7]) txt += ` ${st[7]} recours caractérisés à la force (combats, frappes, occupation).`;
+  if (r.floor === 'conflit') txt += ' Signal automatique d’affrontements armés, à confirmer par ACLED ou UCDP.';
+  else if (r.floor === 'hostilite') txt += ' Des affrontements sont signalés : la note ne peut pas dépasser « Hostilité ».';
+  return txt;
+}
+const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+function host(u){ try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'source'; } }
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
+/* Titre approximatif tiré de l’adresse de l’article (GDELT ne fournit pas les titres). */
+function slugTitle(u){
+  let path = ''; try { path = decodeURIComponent(new URL(u).pathname); } catch (e) { return ''; }
+  const seg = path.split('/').map(x => x.replace(/\.[a-z0-9]{2,5}$/i, '')).filter(x => x.split(/[-_]/).length >= 4).sort((x, y) => y.length - x.length)[0];
+  if (!seg) return '';
+  const words = seg.split(/[-_]+/).filter(w => w && !/^[0-9a-f]{8,}$/i.test(w) && !(/\d/.test(w) && (w.length >= 4 || /^\d+$/.test(w))));
+  const txt = words.join(' ').slice(0, 120);
+  return txt.length < 14 ? '' : txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+function evRow(e){
+  const label = CAMEO_FORCE[String(e.code).slice(0, 3)] || CAMEO[e.root] || 'Événement';
+  const who = [titleCase(e.a1), titleCase(e.a2)].filter(Boolean).join(' → ');
+  const t = slugTitle(e.url);
+  return `<li class="ev"><time>${fmtD.format(new Date(e.date + 'T00:00:00Z'))}</time><div><span class="et">${esc(label)}</span><p>${t ? '« ' + esc(t) + ' »' : esc(who || 'Article')}</p><a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener">${esc(host(e.url))} ↗</a><span class="ex">${esc(who)}${who ? ' · ' : ''}${nf0.format(e.arts)} article${e.arts > 1 ? 's' : ''}</span></div></li>`;
+}
+
+function renderPair(a, b){
+  const t = state.week, t4 = Math.max(0, t - 4), d = PAIRS.get(key(a, b)), g = gen(a, b);
+  const ser = seriesOf(a, b), s = ser[t], dv = s - ser[t4], k = lvl(s);
+  const p = pillarsAt(a, b, t);
+  const W8 = [.35, .25, .4], PN = ['Diplomatie', 'Économie', 'Sécurité'];
+  const trade = tradeVal(a, b);
+  const sh = shared(a, b);
+  const ownAB = BASES.filter(x => x.op === a && x.host === b), ownBA = BASES.filter(x => x.op === b && x.host === a);
+  const live = d && d.live ? d.live[t] : null, doc = d && (!live || live.doc);
+  const evs = !d ? [] : live ? d.ev.filter(e => e.w === t).sort((x, y) => y.arts - x.arts) : d.ev.filter(e => e.w <= t).sort((x, y) => y.w - x.w);
+  const nArt = Math.round(60 + Math.abs(s) * 30 + Math.sqrt(C[a].gdp * C[b].gdp) / 40);
+  const conf = live ? (live.doc ? (live.st[0] >= 150 ? 3 : live.st[0] >= 50 ? 2 : 1) : 1) : d ? (evs.length >= 3 ? 3 : 2) : 1;
+  const confL = ['', 'Faible', 'Moyenne', 'Élevée'][conf];
+  const srcs = live ? ['GDELT'] : d ? [...new Set(['GDELT'].concat(evs.map(e => e.src)))] : ['AGNU', 'COMTRADE'];
+  const pct = v => clamp((v + 10) / 20 * 100, 0, 100);
+  const raw = live ? live.raw : W8.reduce((acc, w, i) => acc + w * p[i], 0);
+  const capped = !doc && Math.abs(raw - g.s) > .05;
+  const floorTxt = live && live.floor ? `<br>→ ramenée à ${sgn(s)} : ${live.st[7]} recours caractérisés à la force signalés avec un ton négatif, plancher « ${live.floor === 'conflit' ? 'Conflit armé' : 'Hostilité'} ».` : '';
+  const sumTxt = live ? liveSummary(live) : d ? d.sum : `Aucun événement bilatéral marquant détecté sur quatre semaines. La relation est estimée à partir de la proximité de vote à l’ONU (${g.vote} %), des organisations communes et du commerce attendu.`;
+  const swatchPos = pct(s);
+  return `<div class="pi">
+    ${head(C[a].name, `data-iso="${a}"`)}
+    <header class="ph">
+      <div class="eyebrow">Relation bilatérale · semaine ${wkn(t)}</div>
+      <h2 class="pname">${esc(C[a].name)}<span class="vs">et</span>${esc(C[b].name)}</h2>
+    </header>
+    <div class="score">
+      <div>${pill(k, 'big')}<div class="sv num">${sgn(s)} <small>/ 10</small></div></div>
+      <div class="dl"><span class="num">${delta(dv)}</span><br>en 4 semaines</div>
+    </div>
+    <div>
+      <div class="meter">${LEVELS.map(L => `<i style="background:${LCOL(L.k)}"></i>`).join('')}<b style="left:${swatchPos.toFixed(1)}%"></b></div>
+      <div class="meter-k"><span>−10 conflit</span><span>0</span><span>alliance +10</span></div>
+    </div>
+    <p class="lede">${esc(sumTxt)}</p>
+    <section class="sec"><h3>Évolution <small>${NW} sem.</small></h3>${chart(ser, t)}</section>
+    <section class="sec"><h3>Comment la note est construite</h3>
+      ${p.map((v, i) => { const left = v < 0 ? pct(v) : 50, width = Math.abs(v) / 20 * 100; return `<div class="pillar"><div class="pl"><b>${PN[i]}</b><span>poids ${W8[i] * 100} %</span></div><div class="pbar"><span class="f" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${LCOL(lvl(v))}"></span><span class="mid"></span></div><span class="pv num">${sgn(v)}</span></div>`; }).join('')}
+      <div class="formula">${W8.map((w, i) => `${String(w).replace('.', ',')} × (${sgn(p[i])})`).join(' + ')} = ${sgn(raw)}${capped ? `<br>→ plafonnée à ${sgn(g.s)} : sans événement documenté, la note ne descend pas sous « Tension ».` : ''}${floorTxt}</div>
+    </section>
+    <section class="sec"><h3>Repères</h3>
+      <dl class="facts">
+        <dt>Commerce bilatéral</dt><dd class="num">${trade < .5 ? 'quasi nul' : '≈ ' + nf0.format(trade) + ' Md$ / an'}</dd>
+        <dt>Traité ou accord</dt><dd>${esc(d && d.treaty ? d.treaty : g.treaty ? g.treaty : sh.includes('OTAN') ? 'Traité de l’Atlantique Nord' : sh.includes('OTSC') ? 'Traité de sécurité collective' : '—')}</dd>
+        <dt>Organisations communes</dt><dd>${sh.length ? sh.map(o => ORG_LABEL[o]).join(', ') : 'Aucune'}</dd>
+        <dt>Votes à l’ONU</dt><dd class="num">≈ ${g.vote} % de votes identiques</dd>
+        <dt>Sanctions</dt><dd>${g.sanc || (d && d.ev.some(e => e.type === 'sanction')) ? 'Régime de sanctions en vigueur' : 'Aucune sanction majeure'}</dd>
+        ${ownAB.length ? `<dt>Bases</dt><dd>${esc(C[a].name)} : ${ownAB.map(x => esc(x.n)).join(', ')}</dd>` : ''}
+        ${ownBA.length ? `<dt>Bases</dt><dd>${esc(C[b].name)} : ${ownBA.map(x => esc(x.n)).join(', ')}</dd>` : ''}
+      </dl>
+    </section>
+    <section class="sec"><h3>Pourquoi ce score ? <small>${live && doc ? evs.length + ' articles les plus repris' : doc ? evs.length + ' faits marquants' : 'modèle'}</small></h3>
+      ${live && doc ? (evs.length ? `<ul class="evs">${evs.map(evRow).join('')}</ul>` : '<p class="note">Pas d’article saillant isolé cette semaine.</p>')
+        : doc ? (evs.length ? `<ul class="evs">${evs.map(e => { const dt = new Date(MON0 + (e.w * 7 + e.day) * DAY); return `<li class="ev"><time>${fmtD.format(dt)}</time><div><span class="et">${EVT[e.type] || e.type}</span><p>${esc(e.text)}</p>${srcLink(e.src)}<span class="ex">exemple</span></div></li>`; }).join('')}</ul>` : '<p class="note">Pas de fait marquant isolé : la note reflète le flux régulier d’événements codés.</p>')
+        : `<ul class="plist"><li><span class="d"></span><span>Proximité de vote à l’AGNU : <b class="num">${g.vote} %</b></span></li><li><span class="d"></span><span>Organisations communes : <b>${sh.length ? sh.map(o => ORG_LABEL[o]).join(', ') : 'aucune'}</b></span></li><li><span class="d"></span><span>Commerce attendu : <b class="num">≈ ${nf0.format(trade)} Md$</b></span></li><li><span class="d"></span><span>Sanctions : <b>${g.sanc ? 'oui' : 'non'}</b></span></li></ul>`}
+      <p class="note">${live ? (live.doc ? `${nf0.format(live.st[0])} événements codés par GDELT cette semaine entre ces deux pays. Les titres sont déduits de l’adresse des articles.` : `${live.st ? nf0.format(live.st[0]) : 'Moins de 5'} événements cette semaine : sous le seuil de ${DOC_MIN}, la note reste celle du modèle structurel.`) : d ? `S’y ajoutent ≈ ${nf0.format(nArt)} articles et dépêches codés par GDELT sur 4 semaines.` : 'Dès qu’un événement bilatéral est détecté, la relation passe en suivi documenté.'}</p>
+    </section>
+    <section class="sec"><h3>Fiabilité</h3>
+      <div class="conf"><span class="cb">${[1, 2, 3].map(i => `<i class="${i <= conf ? 'on' : ''}"></i>`).join('')}</span><span>Confiance <b>${confL.toLowerCase()}</b> · ${srcs.length} ${srcs.length > 1 ? 'sources' : 'source'}</span></div>
+      <div class="src">${srcs.map(srcLink).join('')}</div>
+    </section>
+    <div class="actions">
+      <button type="button" class="btn" data-pair="${b}-${a}">Voir depuis ${esc(the(b))}</button>
+      <button type="button" class="btn" data-iso="${b}">Fiche ${esc(ofThe(b))}</button>
+    </div>
+  </div>`;
+}
+
+function renderHot(id){
+  const h = HOT.find(x => x.id === id), t = state.week, t4 = Math.max(0, t - 4);
+  const mx = Math.max(1, ...h.wk), bw = 360 / Math.max(NW, 6);
+  const bars = h.wk.map((v, i) => `<rect x="${(i * bw + bw * .1).toFixed(1)}" y="${(96 - v / mx * 84).toFixed(1)}" width="${(bw * .8).toFixed(1)}" height="${(v / mx * 84).toFixed(1)}" rx="2" style="fill:${i === t ? 'var(--s-3)' : 'var(--hatch)'}" ${i > t ? 'fill-opacity=".35"' : ''}><title>S${wkn(i)} : ${LIVE ? '' : '≈ '}${nf0.format(v)} ${LIVE ? 'événements' : 'victimes'}</title></rect><text class="ax" x="${(i * bw + bw / 2).toFixed(1)}" y="112" text-anchor="middle">${i % 3 === 0 || i === NW - 1 ? 'S' + wkn(i) : ''}</text>`).join('');
+  const d = h.f4[t4] ? (h.f4[t] - h.f4[t4]) / h.f4[t4] : 0;
+  if (h.live) return `<div class="pi">
+    ${head('Vue d’ensemble', 'data-home')}
+    <header class="ph">
+      <div class="eyebrow">Violence armée signalée · semaine ${wkn(t)}</div>
+      <h2 class="pname">${esc(h.n)}</h2>
+      <div class="orgs"><span class="tag">${esc(C[h.iso].name)}</span></div>
+      <p class="lede">${esc(h.full)}. La presse y rapporte cette semaine des combats, frappes ou occupations impliquant des forces armées.</p>
+    </header>
+    <div class="stats">
+      <div class="stat"><b class="num">${nf0.format(h.wk[t])}</b><span>événements cette semaine</span></div>
+      <div class="stat"><b class="num">${nf0.format(h.f4[t])}</b><span>rapportés à 4 semaines</span></div>
+      <div class="stat"><b class="num">${t === t4 ? '—' : Math.abs(d) < .08 ? '=' : (d > 0 ? '+' : '−') + nf0.format(Math.abs(d) * 100) + ' %'}</b><span>sur 4 semaines</span></div>
+    </div>
+    <section class="sec"><h3>Événements par semaine <small>GDELT</small></h3>
+      <svg class="pchart" viewBox="0 0 360 118" role="img" aria-label="Événements armés signalés par semaine">${bars}</svg>
+    </section>
+    <section class="sec"><h3>Articles les plus repris</h3>
+      ${h.ev.length ? `<ul class="evs">${h.ev.map(evRow).join('')}</ul>` : '<p class="note">Aucun article saillant.</p>'}
+      <p class="note">Signal automatique tiré de GDELT : ce n’est pas un décompte de victimes. À recouper avec ACLED (affrontements géolocalisés), pas encore branché.</p>
+    </section>
+    <div class="actions"><button type="button" class="btn" data-iso="${h.iso}">Fiche ${esc(ofThe(h.iso))}</button></div>
+  </div>`;
+  return `<div class="pi">
+    ${head('Vue d’ensemble', 'data-home')}
+    <header class="ph">
+      <div class="eyebrow">Conflit armé · semaine ${wkn(t)}</div>
+      <h2 class="pname">${esc(h.n)}</h2>
+      <div class="orgs"><span class="tag">${esc(C[h.iso].name)}</span><span class="tag">${esc(h.kind)}</span></div>
+      <p class="lede">Acteurs principaux : ${esc(h.act)}.</p>
+    </header>
+    <div class="stats">
+      <div class="stat"><b class="num">${nf0.format(h.f4[t])}</b><span>victimes estimées, 4 sem.</span></div>
+      <div class="stat"><b class="num">${nf0.format(h.e * (h.wk[t] / h.wk[NW - 1]))}</b><span>événements violents / sem.</span></div>
+      <div class="stat"><b class="num">${Math.abs(d) < .08 ? '=' : (d > 0 ? '+' : '−') + nf0.format(Math.abs(d) * 100) + ' %'}</b><span>sur 4 semaines</span></div>
+    </div>
+    <section class="sec"><h3>Victimes par semaine <small>estimation</small></h3>
+      <svg class="pchart" viewBox="0 0 360 118" role="img" aria-label="Victimes estimées par semaine">${bars}</svg>
+    </section>
+    <section class="sec"><h3>Sources attendues</h3>
+      <p class="note">ACLED (mise à jour hebdomadaire, événements géolocalisés) et UCDP (mensuelle). Les chiffres affichés ici sont illustratifs.</p>
+      <div class="src">${srcLink('ACLED')}${srcLink('UCDP')}</div>
+    </section>
+    <div class="actions"><button type="button" class="btn" data-iso="${h.iso}">Fiche ${esc(ofThe(h.iso))}</button></div>
+  </div>`;
+}
+
+panel.addEventListener('click', e => {
+  const el = e.target.closest('[data-home],[data-iso],[data-pair],[data-hot],[data-layer-on]');
+  if (!el) return;
+  if (el.hasAttribute('data-home')) return home();
+  if (el.dataset.iso) return select(el.dataset.iso);
+  if (el.dataset.pair) { const [a, b] = el.dataset.pair.split('-'); return openPair(a, b); }
+  if (el.dataset.hot) return openHot(el.dataset.hot);
+  if (el.dataset.layerOn) { state.layers[el.dataset.layerOn] = true; syncLayers(); drawOverlays(); }
+});
+panel.addEventListener('pointerover', e => { const b = e.target.closest('.profile [data-hl]'); if (b) { state.hl = +b.dataset.hl; paint(); } });
+panel.addEventListener('pointerout', e => { const b = e.target.closest('.profile [data-hl]'); if (b) { state.hl = null; paint(); } });
+
+/* =====================================================================
+   Navigation
+   ===================================================================== */
+function setHash(tok){ try { history.replaceState(null, '', tok ? '#' + tok : location.pathname + location.search); } catch (e) {} }
+function home(){
+  const fromHot = !!state.hot, o = state.sel ? C[state.sel].anchor : null;
+  state.sel = state.pair = state.hot = null; setHash(''); flowDelay = 400;
+  render(true, o);
+  if (fromHot) svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity);
+}
+function select(iso){
+  if (!C[iso]) return;
+  const changed = state.sel !== iso || !!state.hot;
+  state.sel = iso; state.pair = null; state.hot = null; setHash(iso);
+  if (changed) flowDelay = 800;
+  render(true, changed ? C[iso].anchor : null);
+}
+function openPair(a, b){
+  if (!C[a] || !C[b] || a === b) return;
+  const changed = state.sel !== a || !!state.hot;
+  state.sel = a; state.pair = b; state.hot = null; setHash(a + '-' + b);
+  if (changed) flowDelay = 800;
+  render(true, changed ? C[a].anchor : null);
+}
+function openHot(id){
+  const h = HOT.find(x => x.id === id); if (!h) return;
+  state.hot = id; state.sel = state.pair = null; setHash('zone-' + id); render(true, h.ll);
+  const p = proj(h.ll), k = 3;
+  svg.transition().duration(800).call(zoom.transform, d3.zoomIdentity.translate(W / 2 - p[0] * k, H / 2 - p[1] * k).scale(k));
+}
+function onCountry(id){
+  if (NONSTATE[id]) return;
+  const iso = stateOf(id); if (!C[iso]) return;
+  if (state.sel && !state.hot) { if (iso === state.sel) home(); else openPair(state.sel, iso); }
+  else select(iso);
+}
+function render(scrollTop, origin){
+  hideTip();
+  renderCap(); renderLegend(); renderFrise(); drawOverlays(); paint(origin);
+  panel.innerHTML = state.hot ? renderHot(state.hot) : state.pair ? renderPair(state.sel, state.pair) : state.sel ? renderCountry(state.sel) : renderGlobal();
+  panel.querySelectorAll('.pchart[data-lo]').forEach(el => wireChart(el, seriesOf(state.sel, state.pair)));
+  if (scrollTop) { panel.scrollTop = 0; }
+  $('#mSit').setAttribute('aria-pressed', state.mode === 'sit'); $('#mEvo').setAttribute('aria-pressed', state.mode === 'evo');
+}
+function syncLayers(){ document.querySelectorAll('[data-layer]').forEach(b => b.setAttribute('aria-pressed', !!state.layers[b.dataset.layer])); }
+document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => { const l = b.dataset.layer; state.layers[l] = !state.layers[l]; syncLayers(); drawOverlays(); renderLegend(); }));
+$('#mSit').onclick = () => { state.mode = 'sit'; render(); };
+$('#mEvo').onclick = () => { state.mode = 'evo'; render(); };
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('#method').open) return;
+  if (state.pair) select(state.sel); else if (state.sel || state.hot) home();
+});
+
+/* Recherche */
+$('#countries').innerHTML = ISOS.map(i => `<option value="${esc(C[i].name)}"></option>`).join('');
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+function searchGo(){
+  const q = norm($('#q').value); if (!q) return;
+  const hit = ISOS.find(i => norm(C[i].name) === q) || ISOS.find(i => norm(C[i].name).startsWith(q)) || ISOS.find(i => i.toLowerCase() === q);
+  if (hit) { $('#q').value = ''; $('#q').blur(); state.sel && !state.hot && hit !== state.sel ? openPair(state.sel, hit) : select(hit); }
+}
+$('#q').addEventListener('change', searchGo);
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') searchGo(); });
+
+/* Méthode */
+$('#mLevels').innerHTML = LEVELS.map(L => `<div class="lv">${pill(L.k)}<span>${esc(L.desc)}</span><span class="num">${L.range}</span></div>`).join('');
+const dlg = $('#method');
+function openMethod(sim){ try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); } if (sim) setTimeout(() => $('#mSim').scrollIntoView({block:'start'}), 30); }
+$('#btnMethod').onclick = () => openMethod(false);
+$('#btnIllus').onclick = () => openMethod(true);
+$('#mClose').onclick = () => { try { dlg.close(); } catch (e) { dlg.removeAttribute('open'); } };
+dlg.addEventListener('click', e => { if (e.target === dlg) $('#mClose').onclick(); });
+
+/* Mode données réelles : en-tête, méthode, commandes indisponibles */
+if (LIVE) {
+  try { $('#stampTxt').textContent = new Intl.DateTimeFormat('fr-FR', {weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'UTC'}).format(new Date(LIVE.generated)) + ' UTC'; } catch (e) {}
+  $('#btnIllus').textContent = 'Bêta · données GDELT';
+  $('#mSim').innerHTML = `<h3>Ce qui est mesuré, ce qui est estimé</h3><ul>
+    <li><b>Diplomatie</b> : ton médiatique et échelle de Goldstein des événements bilatéraux codés par GDELT dans la semaine, dès ${DOC_MIN} événements. En dessous, la relation est estimée par le modèle.</li>
+    <li><b>Économie et sécurité</b> : modèle structurel (alliances et traités, sanctions, commerce estimé par un modèle de gravité). La sécurité baisse quand GDELT signale des recours caractérisés à la force entre les deux pays.</li>
+    <li><b>Conflit armé</b> : signal automatique quand ces recours sont nombreux et le ton négatif. À confirmer par ACLED ou UCDP, qui ne sont pas encore branchés.</li>
+    <li><b>Zones de violence</b> : lieux où la presse signale des combats impliquant des forces armées. Ce n’est pas un décompte de victimes, et la couverture médiatique surreprésente certains pays.</li>
+    <li><b>Indicateurs pays</b> (PIB, population, défense) : ordres de grandeur saisis à la main.</li>
+    <li><b>Historique</b> : la frise gagne une semaine chaque lundi, jusqu’à douze.</li></ul>`;
+}
+if (NW < 2) { $('#mEvo').disabled = true; $('#mEvo').title = 'Disponible dès la deuxième semaine de données'; $('#play').disabled = true; }
+
+/* Démarrage */
+syncLayers();
+let rt = null;
+new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { layout(); renderLegend(); }, 60); }).observe(mapwrap);
+layout();
+(function(){
+  const h = (location.hash || '').slice(1);
+  if (/^[A-Z]{3}-[A-Z]{3}$/.test(h)) { const [a, b] = h.split('-'); if (C[a] && C[b]) { state.sel = a; state.pair = b; } }
+  else if (/^[A-Z]{3}$/.test(h) && C[h]) state.sel = h;
+  else if (/^zone-/.test(h) && HOT.some(x => x.id === h.slice(5))) state.hot = h.slice(5);
+})();
+render();
+requestAnimationFrame(() => requestAnimationFrame(() => { document.body.classList.add('ready'); booted = true; }));
+if (!RM) requestAnimationFrame(frame);
+}
+/* Données réelles si site/data/latest.json existe, sinon jeu d’exemple intégré. */
+fetch('data/latest.json', {cache:'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null)
+  .then(d => startTheater(d && Array.isArray(d.weeks) && d.weeks.length ? d : null));
+</script>

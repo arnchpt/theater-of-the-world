@@ -1,0 +1,7 @@
+# Fichiers GDELT bruts (re-téléchargeables) et site généré en intégration continue
+.cache/
+site/
+__pycache__/
+.DS_Store
+.claude/settings.local.json
+.claude/
